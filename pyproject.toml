@@ -6,14 +6,12 @@ build-backend = "uv_build"
 name = "mlopsproj"
 version = "0.0.1"
 description = "nicolai"
-authors = [
-  { name = "nicolai", email = "your@email.com" },
-]
+authors = [{ name = "nicolai", email = "your@email.com" }]
 
 keywords = ["machine learning", "MLOps"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
 ]
 readme = "README.md"
 requires-python = ">=3.12"
@@ -40,12 +38,8 @@ dev = [
 
 
 [tool.uv.sources]
-torch = [
-    { index = "pytorch-cpu" },
-]
-torchvision = [
-    { index = "pytorch-cpu" },
-]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
