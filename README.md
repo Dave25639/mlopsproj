@@ -1,6 +1,6 @@
 # Project Checklist
 
-> **Note:** All lists are *exhaustive*, meaning you are **not expected to complete every single point** for the exam.  
+> **Note:** All lists are _exhaustive_, meaning you are **not expected to complete every single point** for the exam.  
 > The module related to each item is shown in parentheses.
 
 ---
@@ -13,12 +13,12 @@
 - [x] Create the initial file structure using **cookiecutter** with an appropriate template (M6)
 - [ ] Fill out `data.py` to download and preprocess required data (if necessary) (M6)
 - [ ] Add a model to `model.py` and a training procedure to `train.py`, and get it running (M6)
-- [ ] Keep dependencies up to date in:
-  - [ ] `requirements.txt` / `requirements_dev.txt`, **or**
-  - [ ] `pyproject.toml` / `uv.lock` (M2 + M6)
-- [ ] Comply with good coding practices (PEP8) (M7)
+- [x] Keep dependencies up to date in:
+  - [x] `requirements.txt` / `requirements_dev.txt`, **or**
+  - [x] `pyproject.toml` / `uv.lock` (M2 + M6)
+- [x] Comply with good coding practices (PEP8) (M7)
 - [ ] Document essential parts of the code (docstrings/comments) (M7)
-- [ ] Set up version control for all or part of the data (M8)
+- [x] Set up version control for all or part of the data (M8)
 - [ ] Add command-line interfaces (CLI) and project commands where appropriate (M9)
 - [ ] Construct one or more Dockerfiles (M10)
 - [ ] Build Docker images locally and verify they work (M10)
@@ -78,11 +78,6 @@
 - [ ] Ensure all group members understand all parts of the project
 - [ ] Upload all code to GitHub
 
-
-
-
-
-
 ````markdown
 # mlopsproj
 
@@ -91,6 +86,7 @@ nicolai
 ## Project structure
 
 The directory structure of the project looks like this:
+
 ```txt
 ├── .github/                  # Github actions and dependabot
 │   ├── dependabot.yaml
@@ -133,9 +129,7 @@ The directory structure of the project looks like this:
 └── tasks.py                  # Project tasks
 ```
 
-
 Created using [mlops_template](https://github.com/SkafteNicki/mlops_template),
 a [cookiecutter template](https://github.com/cookiecutter/cookiecutter) for getting
 started with Machine Learning Operations (MLOps).
-
 ````
