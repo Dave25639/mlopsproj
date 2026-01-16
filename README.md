@@ -5,12 +5,12 @@
 
 ---
 
-## ✅ Week 1
+## Week 1
 
-- [ ] Create a git repository (M5)
-- [ ] Make sure that all team members have write access to the GitHub repository (M5)
-- [ ] Create a dedicated environment for your project to keep track of packages (M2)
-- [ ] Create the initial file structure using **cookiecutter** with an appropriate template (M6)
+- [x] Create a git repository (M5)
+- [x] Make sure that all team members have write access to the GitHub repository (M5)
+- [x] Create a dedicated environment for your project to keep track of packages (M2)
+- [x] Create the initial file structure using **cookiecutter** with an appropriate template (M6)
 - [ ] Fill out `data.py` to download and preprocess required data (if necessary) (M6)
 - [ ] Add a model to `model.py` and a training procedure to `train.py`, and get it running (M6)
 - [ ] Keep dependencies up to date in:
@@ -32,7 +32,7 @@
 
 ---
 
-## ✅ Week 2
+## Week 2
 
 - [ ] Write unit tests for the data pipeline (M16)
 - [ ] Write unit tests for model construction and/or training (M16)
@@ -55,7 +55,7 @@
 
 ---
 
-## ✅ Week 3
+## Week 3
 
 - [ ] Evaluate robustness to data drift (M27)
 - [ ] Collect input-output data from the deployed application (M27)
@@ -69,7 +69,7 @@
 
 ---
 
-## ⭐ Extra
+## Extra
 
 - [ ] Write documentation for the application (M32)
 - [ ] Publish documentation using **GitHub Pages** (M32)
