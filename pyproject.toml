@@ -52,6 +52,8 @@ explicit = true
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
 select = ["I"]
 
 [tool.coverage.run]
