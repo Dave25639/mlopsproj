@@ -17,6 +17,17 @@ git checkout v0.0
 uv run dvc checkout
 ```
 
+To switch back to master branch after done inspecting previous version:
+```
+git checkout master
+```
+
+To see all tags or branches:
+```bash
+git tags
+git branches
+```
+
 ### v0.0
 Configured everything up to the end of M8 properly. DVC is also linked and set up with a test image to start with. Further versions will include the full dataset we plan to use.
 
