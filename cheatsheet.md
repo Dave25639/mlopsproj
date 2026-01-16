@@ -25,5 +25,23 @@ uv run ruff format .
 
 ## DVC
 
+When using DVC for the first time, you'll have to set your credentials. To find them go to the dagshub repository for the project (https://dagshub.com/Dave25639/mlopsproj) and click the green "Remote" dropdown -> Data -> DVC -> Setup credentials. Remember to click the eye icon so it actually shows you your token then copy and run like below:
+
 ```bash
+dvc remote modify origin --local access_key_id your_token 
+dvc remote modify origin --local secret_access_key your_token 
 ```
+
+If you have added or modified files in a dataset, you should run 
+
+```bash
+uv run dvc add data/raw
+```
+
+for example to update the dvc metadata file with the new changes. Then make sure to push the new metadata file to github and run
+
+```bash
+uv run dvc push
+```
+
+to push the changes and new data files to dagshub.
