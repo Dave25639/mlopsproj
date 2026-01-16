@@ -3,7 +3,15 @@
 Use this markdown file to find useful terminal commands for each segment of the MLOps pipeline.
 
 ## Table of Contents
+- [Virtual Environment](#virtual-environment)
+- [Version History and Information]()
 - [Styling](#styling)
+- [DVC](#dvc)
+
+## Version History and Information
+
+### v0.0
+Configured everything up to the end of M8 properly. DVC is also linked and set up with a test image to start with. Further versions will include the full dataset we plan to use.
 
 ## Virtual Environment
 
@@ -30,6 +38,11 @@ When using DVC for the first time, you'll have to set your credentials. To find 
 ```bash
 dvc remote modify origin --local access_key_id your_token 
 dvc remote modify origin --local secret_access_key your_token 
+```
+
+Now you should be able to pull the dataset with:
+```bash
+uv run dvc pull
 ```
 
 If you have added or modified files in a dataset, you should run 
