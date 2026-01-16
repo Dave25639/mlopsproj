@@ -28,6 +28,12 @@ git tags
 git branches
 ```
 
+To push a new tag to remote:
+```bash
+git push origin <v0.0> # single tag
+git push origin --tags # all tags
+```
+
 ### v0.0
 Configured everything up to the end of M8 properly. DVC is also linked and set up with a test image to start with. Further versions will include the full dataset we plan to use.
 
