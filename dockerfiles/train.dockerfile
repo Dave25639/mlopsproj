@@ -11,4 +11,11 @@ COPY LICENSE LICENSE
 
 RUN uv sync --frozen
 
+# DVC Data Pull
+RUN uv run dvc init --no-scm
+COPY .dvc/config .dvc/config
+COPY *.dvc .dvc/
+RUN uv run dvc config core.no_scm true
+RUN uv run dvc pull
+
 ENTRYPOINT ["uv", "run", "src/mlopsproj/train.py"]

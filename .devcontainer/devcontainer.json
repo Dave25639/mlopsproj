@@ -2,21 +2,37 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
     "name": "mlopsproj",
-    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
     "features": {},
 
-    // Use 'postCreateCommand' to run commands after the container is created.
+    // Run post-create setup
     "postCreateCommand": "bash .devcontainer/post_create.sh",
 
-    // Configure tool-specific properties.
+    // Mounts allow persistent host folders to appear inside the container
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    ],
+
+    // Environment variables inside the container
+    "containerEnv": {
+        // Point DVC to the mounted folder in project data directory
+        "DVC_DATA_DIR": "/workspaces/mlopsproj/data"
+    },
+
+    // Configure tool-specific VS Code customizations
     "customizations": {
         "vscode": {
-            "extensions": ["ms-python.python", "editorconfig.editorconfig"],
+            "extensions": [
+                "ms-python.python",          // Python support
+                "editorconfig.editorconfig"  // EditorConfig support
+            ],
             "settings": {
+                // Test configuration
                 "python.testing.pytestArgs": ["tests"],
                 "python.testing.unittestEnabled": false,
                 "python.testing.pytestEnabled": true,
+
+                // Python interpreter inside container
                 "python.defaultInterpreterPath": "/workspaces/mlopsproj/.venv/bin/python",
                 "python.testing.pytestPath": "/workspaces/mlopsproj/.venv/bin/pytest"
             }
