@@ -264,9 +264,9 @@ class Food101DataModule(L.LightningDataModule):
 
         self.num_classes: int = 101
 
-        self.train_ds: Optional[Food101Dataset] = None
-        self.val_ds: Optional[Food101Dataset] = None
-        self.test_ds: Optional[Food101Dataset] = None
+        self.train_dataset: Optional[Food101Dataset] = None
+        self.val_dataset: Optional[Food101Dataset] = None
+        self.test_dataset: Optional[Food101Dataset] = None
 
     def prepare_data(self):
         # Nothing to download (data is local), but we can validate structure lightly.
@@ -314,26 +314,26 @@ class Food101DataModule(L.LightningDataModule):
         eval_tf = build_transforms(self.img_size, train=False)
 
         # Build datasets
-        self.train_ds = Food101Dataset(
+        self.train_dataset = Food101Dataset(
             data_dir=self.data_dir,
             sample_list=train_samples,
             transform=train_tf,
             strict_files=self.strict_files,
         )
-        self.val_ds = Food101Dataset(
+        self.val_dataset = Food101Dataset(
             data_dir=self.data_dir,
             sample_list=val_samples,
             transform=eval_tf,
             strict_files=self.strict_files,
         )
-        self.test_ds = Food101Dataset(
+        self.test_dataset = Food101Dataset(
             data_dir=self.data_dir,
             sample_list=test_list,
             transform=eval_tf,
             strict_files=self.strict_files,
         )
 
-        self.num_classes = len(self.train_ds.classes)
+        self.num_classes = len(self.train_dataset.classes)
 
     def _dl(self, ds: Dataset, shuffle: bool, drop_last: bool = False) -> DataLoader:
         return DataLoader(
@@ -348,16 +348,16 @@ class Food101DataModule(L.LightningDataModule):
         )
 
     def train_dataloader(self) -> DataLoader:
-        assert self.train_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.train_ds, shuffle=True, drop_last=False)
+        assert self.train_dataset is not None, "Call setup() before requesting dataloaders."
+        return self._dl(self.train_dataset, shuffle=True, drop_last=False)
 
     def val_dataloader(self) -> DataLoader:
-        assert self.val_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.val_ds, shuffle=False, drop_last=True)
+        assert self.val_dataset is not None, "Call setup() before requesting dataloaders."
+        return self._dl(self.val_dataset, shuffle=False, drop_last=True)
 
     def test_dataloader(self) -> DataLoader:
-        assert self.test_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.test_ds, shuffle=False, drop_last=True)
+        assert self.test_dataset is not None, "Call setup() before requesting dataloaders."
+        return self._dl(self.test_dataset, shuffle=False, drop_last=True)
 
 
 if __name__ == "__main__":
@@ -387,4 +387,4 @@ if __name__ == "__main__":
 
     print("Num classes:", dm.num_classes)
     # type: ignore[attr-defined]
-    print("First 5 classes:", dm.train_ds.classes[:5])
+    print("First 5 classes:", dm.train_dataset.classes[:5])
