@@ -18,10 +18,7 @@ import torch
 import torch.nn as nn
 from torchmetrics import Accuracy, MetricCollection
 
-try:
-    import lightning as L
-except Exception:
-    import pytorch_lightning as L  # type: ignore
+import pytorch_lightning as L  # type: ignore
 
 from transformers import ViTForImageClassification, ViTConfig
 

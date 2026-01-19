@@ -14,22 +14,18 @@ from pathlib import Path
 from typing import Optional
 
 import torch
+import pytorch_lightning as L
 
-try:
-    import lightning as L
-except Exception:
-    import pytorch_lightning as L  # type: ignore
-
-from lightning.pytorch.callbacks import (
+from pytorch_lightning.callbacks import (
     ModelCheckpoint,
     EarlyStopping,
     LearningRateMonitor,
     RichProgressBar,
 )
-from lightning.pytorch.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 
-from data import Food101DataModule
-from model import ViTClassifier
+from .data import Food101DataModule
+from .model import ViTClassifier
 
 
 def parse_args() -> argparse.Namespace:
