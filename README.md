@@ -1,6 +1,6 @@
 # Project Checklist
 
-> **Note:** All lists are _exhaustive_, meaning you are **not expected to complete every single point** for the exam.  
+> **Note:** All lists are _exhaustive_, meaning you are **not expected to complete every single point** for the exam.
 > The module related to each item is shown in parentheses.
 
 ---
@@ -20,9 +20,9 @@
 - [ ] Document essential parts of the code (docstrings/comments) (M7)
 - [x] Set up version control for all or part of the data (M8)
 - [ ] Add command-line interfaces (CLI) and project commands where appropriate (M9)
-- [ ] Construct one or more Dockerfiles (M10)
-- [ ] Build Docker images locally and verify they work (M10)
-- [ ] Write one or more configuration files for experiments (M11)
+- [x] Construct one or more Dockerfiles (M10)
+- [x] Build Docker images locally and verify they work (M10)
+- [x] Write one or more configuration files for experiments (M11)
 - [ ] Use **Hydra** for configuration loading and hyperparameter management (M11)
 - [ ] Use profiling to optimize performance-critical code (M12)
 - [ ] Use logging to log important events (M14)
