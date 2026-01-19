@@ -335,7 +335,7 @@ class Food101DataModule(L.LightningDataModule):
 
         self.num_classes = len(self.train_ds.classes)
 
-    def _dl(self, ds: Dataset, shuffle: bool) -> DataLoader:
+    def _dl(self, ds: Dataset, shuffle: bool, drop_last: bool = False) -> DataLoader:
         return DataLoader(
             ds,
             batch_size=self.batch_size,
@@ -344,19 +344,20 @@ class Food101DataModule(L.LightningDataModule):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers and self.num_workers > 0,
             prefetch_factor=self.prefetch_factor if self.num_workers > 0 else None,
+            drop_last=drop_last,  # Drop incomplete batches
         )
 
     def train_dataloader(self) -> DataLoader:
         assert self.train_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.train_ds, shuffle=True)
+        return self._dl(self.train_ds, shuffle=True, drop_last=False)
 
     def val_dataloader(self) -> DataLoader:
         assert self.val_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.val_ds, shuffle=False)
+        return self._dl(self.val_ds, shuffle=False, drop_last=True)
 
     def test_dataloader(self) -> DataLoader:
         assert self.test_ds is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.test_ds, shuffle=False)
+        return self._dl(self.test_ds, shuffle=False, drop_last=True)
 
 
 if __name__ == "__main__":

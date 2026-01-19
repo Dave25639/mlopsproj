@@ -11,8 +11,8 @@
 - [x] Make sure that all team members have write access to the GitHub repository (M5)
 - [x] Create a dedicated environment for your project to keep track of packages (M2)
 - [x] Create the initial file structure using **cookiecutter** with an appropriate template (M6)
-- [ ] Fill out `data.py` to download and preprocess required data (if necessary) (M6)
-- [ ] Add a model to `model.py` and a training procedure to `train.py`, and get it running (M6)
+- [x] Fill out `data.py` to download and preprocess required data (if necessary) (M6)
+- [x] Add a model to `model.py` and a training procedure to `train.py`, and get it running (M6)
 - [x] Keep dependencies up to date in:
   - [x] `requirements.txt` / `requirements_dev.txt`, **or**
   - [x] `pyproject.toml` / `uv.lock` (M2 + M6)
@@ -28,7 +28,7 @@
 - [ ] Use logging to log important events (M14)
 - [ ] Use **Weights & Biases** to log training progress and artifacts (M14)
 - [ ] Consider running a hyperparameter sweep (M14)
-- [ ] Use **PyTorch Lightning** (if applicable) to reduce boilerplate (M15)
+- [x] Use **PyTorch Lightning** (if applicable) to reduce boilerplate (M15)
 
 ---
 

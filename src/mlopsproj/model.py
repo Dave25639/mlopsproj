@@ -83,11 +83,16 @@ class ViTClassifier(L.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
 
         # Metrics
-        self.train_metrics = MetricCollection({
+        metrics_dict = {
             "acc": Accuracy(task="multiclass", num_classes=num_classes),
-            "acc_top5": Accuracy(task="multiclass", num_classes=num_classes, top_k=5),
-        }, prefix="train/")
+        }
 
+        # Only add top-5 if we have enough classes
+        if num_classes >= 5:
+            metrics_dict["acc_top5"] = Accuracy(
+                task="multiclass", num_classes=num_classes, top_k=5)
+
+        self.train_metrics = MetricCollection(metrics_dict, prefix="train/")
         self.val_metrics = self.train_metrics.clone(prefix="val/")
         self.test_metrics = self.train_metrics.clone(prefix="test/")
 
@@ -114,9 +119,11 @@ class ViTClassifier(L.LightningModule):
         logits = self(pixel_values)
         loss = self.criterion(logits, labels)
 
-        # Update metrics
+        # FIX: Pass raw logits to metrics instead of argmax'ed preds
+        metrics.update(logits, labels)
+
+        # You can still calculate preds for the return dictionary if needed elsewhere
         preds = torch.argmax(logits, dim=1)
-        metrics.update(preds, labels)
 
         return {"loss": loss, "logits": logits, "preds": preds, "labels": labels}
 
