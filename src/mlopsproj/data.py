@@ -36,6 +36,7 @@ Notes:
 from __future__ import annotations
 
 import os
+import logging
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Sequence
 
@@ -46,6 +47,9 @@ from torchvision import transforms
 
 import pytorch_lightning as L
 
+# Setup logger
+logger = logging.getLogger(__name__)
+
 
 # -----------------------
 # Helpers
@@ -55,7 +59,9 @@ def _read_lines(path: str) -> List[str]:
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Missing file: {path}")
     with open(path, "r", encoding="utf-8") as f:
-        return [ln.strip() for ln in f.readlines() if ln.strip()]
+        lines = [ln.strip() for ln in f.readlines() if ln.strip()]
+    logger.debug(f"Read {len(lines)} lines from {path}")
+    return lines
 
 
 @dataclass(frozen=True)
@@ -87,6 +93,7 @@ def build_transforms(img_size: int = 224, train: bool = True) -> transforms.Comp
     std = (0.5, 0.5, 0.5)
 
     if train:
+        logger.debug(f"Building training transforms with img_size={img_size}")
         return transforms.Compose(
             [
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
@@ -99,6 +106,7 @@ def build_transforms(img_size: int = 224, train: bool = True) -> transforms.Comp
             ]
         )
 
+    logger.debug(f"Building evaluation transforms with img_size={img_size}")
     return transforms.Compose(
         [
             transforms.Resize(img_size + 32),
@@ -128,6 +136,9 @@ def deterministic_split_indices(
 
     val_idx = perm[:n_val]
     train_idx = perm[n_val:]
+
+    logger.info(
+        f"Split {n} samples into {len(train_idx)} train and {len(val_idx)} val")
     return train_idx, val_idx
 
 
@@ -164,10 +175,12 @@ class Food101Dataset(Dataset):
         self.strict_files = strict_files
 
         # 1) Class mapping
+        logger.debug(f"Loading classes from {self.paths.classes_txt}")
         self.classes: List[str] = _read_lines(self.paths.classes_txt)
         if not self.classes:
             raise ValueError(f"No classes found in {self.paths.classes_txt}")
         self.class_to_idx = {c: i for i, c in enumerate(self.classes)}
+        logger.info(f"Loaded {len(self.classes)} classes")
 
         # 2) Sample list
         if sample_list is None:
@@ -175,9 +188,12 @@ class Food101Dataset(Dataset):
                 raise ValueError(
                     "Provide either split='train'/'test' or sample_list=[...].")
             split_file = self.paths.split_txt(split)
+            logger.info(f"Loading samples from {split_file}")
             rel_samples = _read_lines(split_file)
         else:
             rel_samples = list(sample_list)
+            logger.info(
+                f"Using provided sample_list with {len(rel_samples)} samples")
 
         if not rel_samples:
             raise ValueError("No samples found for dataset.")
@@ -202,19 +218,26 @@ class Food101Dataset(Dataset):
 
         if self.strict_files and missing:
             preview = "\n".join(missing[:10])
+            logger.error(
+                f"{len(missing)} image files not found. First missing:\n{preview}")
             raise FileNotFoundError(
                 f"{len(missing)} image files referenced by metadata were not found. "
                 f"First missing paths:\n{preview}"
             )
 
         self.items = items
+        logger.info(f"Dataset initialized with {len(self.items)} samples")
 
     def __len__(self) -> int:
         return len(self.items)
 
     def __getitem__(self, idx: int):
         img_path, label = self.items[idx]
-        img = Image.open(img_path).convert("RGB")
+        try:
+            img = Image.open(img_path).convert("RGB")
+        except Exception as e:
+            logger.error(f"Failed to load image {img_path}: {e}")
+            raise
 
         if self.transform is not None:
             pixel_values = self.transform(img)
@@ -268,18 +291,30 @@ class Food101DataModule(L.LightningDataModule):
         self.val_dataset: Optional[Food101Dataset] = None
         self.test_dataset: Optional[Food101Dataset] = None
 
+        logger.info(f"DataModule initialized with batch_size={batch_size}, "
+                    f"num_workers={num_workers}, data_fraction={data_fraction}")
+
     def prepare_data(self):
         # Nothing to download (data is local), but we can validate structure lightly.
+        logger.info("Validating data directory structure...")
         paths = Food101Paths(self.data_dir)
-        for p in [paths.images_dir, paths.meta_dir, paths.classes_txt, paths.split_txt("train"), paths.split_txt("test")]:
+        for p in [paths.images_dir, paths.meta_dir, paths.classes_txt,
+                  paths.split_txt("train"), paths.split_txt("test")]:
             if not os.path.exists(p):
+                logger.error(f"Expected path not found: {p}")
                 raise FileNotFoundError(f"Expected path not found: {p}")
+        logger.info("Data directory structure validated successfully")
 
     def setup(self, stage: Optional[str] = None):
+        logger.info(f"Setting up data for stage: {stage}")
+
         # Read the canonical train/test lists once here
         paths = Food101Paths(self.data_dir)
         train_list = _read_lines(paths.split_txt("train"))
         test_list = _read_lines(paths.split_txt("test"))
+
+        logger.info(
+            f"Original dataset: {len(train_list)} train, {len(test_list)} test samples")
 
         # Subset data if data_fraction < 1.0 (for quick testing)
         if self.data_fraction < 1.0:
@@ -298,8 +333,10 @@ class Food101DataModule(L.LightningDataModule):
             train_list = [train_list[i] for i in train_indices]
             test_list = [test_list[i] for i in test_indices]
 
-            print(
-                f"Using {self.data_fraction*100:.1f}% of data: {len(train_list)} train samples, {len(test_list)} test samples")
+            logger.info(
+                f"Using {self.data_fraction*100:.1f}% of data: "
+                f"{len(train_list)} train samples, {len(test_list)} test samples"
+            )
 
         # Deterministically split train_list -> train/val
         tr_idx, va_idx = deterministic_split_indices(
@@ -309,6 +346,9 @@ class Food101DataModule(L.LightningDataModule):
         )
         train_samples = [train_list[i] for i in tr_idx]
         val_samples = [train_list[i] for i in va_idx]
+
+        logger.info(f"Final split: {len(train_samples)} train, "
+                    f"{len(val_samples)} val, {len(test_list)} test")
 
         train_tf = build_transforms(self.img_size, train=True)
         eval_tf = build_transforms(self.img_size, train=False)
@@ -344,7 +384,7 @@ class Food101DataModule(L.LightningDataModule):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers and self.num_workers > 0,
             prefetch_factor=self.prefetch_factor if self.num_workers > 0 else None,
-            drop_last=drop_last,  # Drop incomplete batches
+            drop_last=drop_last,
         )
 
     def train_dataloader(self) -> DataLoader:
@@ -361,6 +401,12 @@ class Food101DataModule(L.LightningDataModule):
 
 
 if __name__ == "__main__":
+    # Setup logging for standalone testing
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
     # Usage:
     #   FOOD101_DIR=/path/to/food-101 python data.py
     data_dir = os.environ.get("FOOD101_DIR", "/workspaces/mlopsproj/data")

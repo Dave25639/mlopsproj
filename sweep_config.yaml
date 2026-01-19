@@ -1,0 +1,92 @@
+# sweep_config.yaml
+# Weights & Biases Hyperparameter Sweep Configuration
+#
+# Usage:
+#   wandb sweep sweep_config.yaml
+#   wandb agent <sweep_id>
+#
+# Or use sweep.py script:
+#   python sweep.py --data_dir /path/to/food-101
+
+program: train.py
+method: bayes  # Options: grid, random, bayes
+metric:
+  name: val/acc
+  goal: maximize
+
+# Early termination
+early_terminate:
+  type: hyperband
+  min_iter: 3
+  eta: 2
+  s: 2
+
+parameters:
+  # Data parameters
+  data_dir:
+    value: /path/to/food-101  # Update this!
+
+  batch_size:
+    values: [16, 32, 64]
+
+  data_fraction:
+    value: 0.001  # Use 0.1 for quick testing
+
+  # Model parameters
+  model_name:
+    value: google/vit-base-patch16-224-in21k
+
+  freeze_backbone:
+    values: [false, true]
+
+  dropout:
+    distribution: uniform
+    min: 0.0
+    max: 0.5
+
+  # Training parameters
+  learning_rate:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e-3
+
+  weight_decay:
+    values: [0.0, 0.01, 0.05, 0.1]
+
+  warmup_steps:
+    values: [100, 500, 1000]
+
+  max_epochs:
+    value: 10
+
+  # Optimizer parameters
+  accumulate_grad_batches:
+    values: [1, 2, 4]
+
+  # Fixed parameters
+  use_wandb:
+    value: true
+
+  wandb_project:
+    value: food101-vit-sweep
+
+  log_predictions:
+    value: true
+
+  log_gradients:
+    value: true
+
+  early_stopping_patience:
+    value: 3
+
+  seed:
+    value: 42
+
+  num_workers:
+    value: 4
+
+  img_size:
+    value: 224
+
+  val_fraction:
+    value: 0.1
