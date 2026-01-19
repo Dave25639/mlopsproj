@@ -151,7 +151,8 @@ class Food101Dataset(Dataset):
     def __init__(
         self,
         data_dir: str,
-        split: Optional[str] = None,  # "train" or "test" (optional if sample_list provided)
+        # "train" or "test" (optional if sample_list provided)
+        split: Optional[str] = None,
         sample_list: Optional[Sequence[str]] = None,
         transform: Optional[transforms.Compose] = None,
         image_ext: str = ".jpg",
@@ -171,7 +172,8 @@ class Food101Dataset(Dataset):
         # 2) Sample list
         if sample_list is None:
             if split is None:
-                raise ValueError("Provide either split='train'/'test' or sample_list=[...].")
+                raise ValueError(
+                    "Provide either split='train'/'test' or sample_list=[...].")
             split_file = self.paths.split_txt(split)
             rel_samples = _read_lines(split_file)
         else:
@@ -189,7 +191,8 @@ class Food101Dataset(Dataset):
             if cls not in self.class_to_idx:
                 raise ValueError(f"Class '{cls}' not found in classes.txt")
             label = self.class_to_idx[cls]
-            img_path = os.path.join(self.paths.images_dir, rel + self.image_ext)
+            img_path = os.path.join(
+                self.paths.images_dir, rel + self.image_ext)
 
             if self.strict_files and (not os.path.isfile(img_path)):
                 missing.append(img_path)
@@ -244,6 +247,7 @@ class Food101DataModule(L.LightningDataModule):
         persistent_workers: bool = True,
         prefetch_factor: Optional[int] = 2,
         strict_files: bool = True,
+        data_fraction: float = 1.0,
     ):
         super().__init__()
         self.data_dir = data_dir
@@ -256,6 +260,7 @@ class Food101DataModule(L.LightningDataModule):
         self.persistent_workers = persistent_workers
         self.prefetch_factor = prefetch_factor
         self.strict_files = strict_files
+        self.data_fraction = data_fraction
 
         self.num_classes: int = 101
 
@@ -275,6 +280,26 @@ class Food101DataModule(L.LightningDataModule):
         paths = Food101Paths(self.data_dir)
         train_list = _read_lines(paths.split_txt("train"))
         test_list = _read_lines(paths.split_txt("test"))
+
+        # Subset data if data_fraction < 1.0 (for quick testing)
+        if self.data_fraction < 1.0:
+            n_train = max(1, int(len(train_list) * self.data_fraction))
+            n_test = max(1, int(len(test_list) * self.data_fraction))
+
+            # Use deterministic subset
+            g = torch.Generator()
+            g.manual_seed(self.split_seed)
+
+            train_indices = torch.randperm(len(train_list), generator=g)[
+                :n_train].tolist()
+            test_indices = torch.randperm(len(test_list), generator=g)[
+                :n_test].tolist()
+
+            train_list = [train_list[i] for i in train_indices]
+            test_list = [test_list[i] for i in test_indices]
+
+            print(
+                f"Using {self.data_fraction*100:.1f}% of data: {len(train_list)} train samples, {len(test_list)} test samples")
 
         # Deterministically split train_list -> train/val
         tr_idx, va_idx = deterministic_split_indices(
@@ -360,4 +385,5 @@ if __name__ == "__main__":
     print("Test batch:", xb.shape, yb.shape, xb.dtype, yb.dtype)
 
     print("Num classes:", dm.num_classes)
-    print("First 5 classes:", dm.train_ds.classes[:5])  # type: ignore[attr-defined]
+    # type: ignore[attr-defined]
+    print("First 5 classes:", dm.train_ds.classes[:5])

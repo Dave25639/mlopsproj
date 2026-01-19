@@ -53,6 +53,12 @@ def parse_args() -> argparse.Namespace:
         default=0.1,
         help="Fraction of train set to use for validation"
     )
+    parser.add_argument(
+        "--data_fraction",
+        type=float,
+        default=1.0,
+        help="Fraction of dataset to use (0.1 = 10%% for quick testing)",
+    )
 
     # Model arguments
     parser.add_argument(
@@ -165,6 +171,7 @@ def main():
         img_size=args.img_size,
         val_fraction=args.val_fraction,
         split_seed=args.seed,
+        data_fraction=args.data_fraction,
     )
 
     # Calculate max_steps for lr scheduler
@@ -256,6 +263,7 @@ def main():
     print("=" * 80)
     print(f"Output directory: {output_dir}")
     print(f"Model: {args.model_name}")
+    print(f"Data fraction: {args.data_fraction*100:.1f}%")
     print(
         f"Batch size: {args.batch_size} (accumulate: {args.accumulate_grad_batches})")
     print(

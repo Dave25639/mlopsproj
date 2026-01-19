@@ -27,6 +27,7 @@ dependencies = [
     "pillow>=10.4.0",
     "torchvision>=0.21.0",
     "pytorch-lightning>=2.6.0",
+    "tensorboard>=2.20.0",
 ]
 
 [dependency-groups]
