@@ -544,9 +544,9 @@ def main():
     logger.info(f"Model: {args.model_name}")
     logger.info(f"Dataset: Food-101 ({args.data_fraction*100:.1f}% of data)")
     logger.info(f"Num classes: {datamodule.num_classes}")
-    logger.info(f"Train samples: {len(datamodule.train_ds)}")
-    logger.info(f"Val samples: {len(datamodule.val_ds)}")
-    logger.info(f"Test samples: {len(datamodule.test_ds)}")
+    logger.info(f"Train samples: {len(datamodule.train_dataset)}")
+    logger.info(f"Val samples: {len(datamodule.val_dataset)}")
+    logger.info(f"Test samples: {len(datamodule.test_dataset)}")
     logger.info(f"Batch size: {args.batch_size}")
     logger.info(f"Gradient accumulation: {args.accumulate_grad_batches}")
     logger.info(
