@@ -24,10 +24,10 @@
 - [x] Build Docker images locally and verify they work (M10)
 - [x] Write one or more configuration files for experiments (M11)
 - [ ] Use **Hydra** for configuration loading and hyperparameter management (M11)
-- [ ] Use profiling to optimize performance-critical code (M12)
-- [ ] Use logging to log important events (M14)
-- [ ] Use **Weights & Biases** to log training progress and artifacts (M14)
-- [ ] Consider running a hyperparameter sweep (M14)
+- [x] Use profiling to optimize performance-critical code (M12)
+- [x] Use logging to log important events (M14)
+- [x] Use **Weights & Biases** to log training progress and artifacts (M14)
+- [x] Consider running a hyperparameter sweep (M14)
 - [x] Use **PyTorch Lightning** (if applicable) to reduce boilerplate (M15)
 
 ---
