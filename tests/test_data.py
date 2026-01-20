@@ -10,12 +10,13 @@ def setup_food101_datamodule():
         _PATH_DATA,
         batch_size=16,
         num_workers=2,
-        img_size=224,
-        data_fraction=0.1
+        val_fraction=0.1,
+        seed=42,
+        augment_train=False
     )
-    dm.prepare_data()
     dm.setup()
     return dm
+
 
 def test_food101_setup_creates_datasets(setup_food101_datamodule):
     dm = setup_food101_datamodule
@@ -26,6 +27,7 @@ def test_food101_setup_creates_datasets(setup_food101_datamodule):
     assert len(dm.train_dataset) > 0
     assert len(dm.val_dataset) > 0
     assert len(dm.test_dataset) > 0
+
 
 def test_dataloaders_use_correct_datasets(setup_food101_datamodule):
     dm = setup_food101_datamodule
@@ -38,6 +40,7 @@ def test_dataloaders_use_correct_datasets(setup_food101_datamodule):
     assert val_loader.dataset is dm.val_dataset
     assert test_loader.dataset is dm.test_dataset
 
+
 def test_train_batch_structure(setup_food101_datamodule):
     dm = setup_food101_datamodule
 
@@ -46,14 +49,15 @@ def test_train_batch_structure(setup_food101_datamodule):
     assert images.ndim == 4
     assert labels.ndim == 1
 
-    assert images.shape[0] <= dm.batch_size
+    assert images.shape[0] <= dm.hparams.batch_size
     assert images.shape[1] == 3
-    assert images.shape[2] == dm.img_size
-    assert images.shape[3] == dm.img_size
+    assert images.shape[2] == 224
+    assert images.shape[3] == 224
 
     assert labels.dtype in (torch.int64, torch.long)
     assert labels.min().item() >= 0
     assert labels.max().item() < dm.num_classes
+
 
 def test_images_are_normalized(setup_food101_datamodule):
     dm = setup_food101_datamodule
@@ -61,23 +65,25 @@ def test_images_are_normalized(setup_food101_datamodule):
     images, _ = next(iter(dm.train_dataloader()))
 
     assert images.dtype == torch.float32
-    assert images.max() <= 1.0 or images.max() <= 3.0
+    # normalized images with mean/std 0.5, range roughly [-1, 1]
+    assert images.max() <= 3.0
     assert images.min() >= -3.0
 
-def test_data_fraction(setup_food101_datamodule):
-    fraction = 0.1
-    dm_frac = setup_food101_datamodule
 
-    dm_full = Food101DataModule(_PATH_DATA)
-    dm_full.setup()
+def test_val_fraction(setup_food101_datamodule):
+    dm = setup_food101_datamodule
+    total_train_len = len(dm.train_dataset) + len(dm.val_dataset)
+    expected_val_len = int(total_train_len * dm.hparams.val_fraction)
 
-    assert len(dm_frac.train_dataset) - int(len(dm_full.train_dataset) * fraction) < 2
-    assert len(dm_frac.val_dataset) - int(len(dm_full.val_dataset) * fraction) < 2
-    assert len(dm_frac.test_dataset) - int(len(dm_full.test_dataset) * fraction) < 2
+    # allow off-by-one rounding
+    assert abs(len(dm.val_dataset) - expected_val_len) <= 1
+
 
 def test_dataloader_works_in_loop(setup_food101_datamodule):
     dm = setup_food101_datamodule
 
     for batch in dm.train_dataloader():
         images, labels = batch
+        assert images.shape[0] <= dm.hparams.batch_size
+        assert labels.shape[0] <= dm.hparams.batch_size
         break
