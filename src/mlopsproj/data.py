@@ -1,59 +1,18 @@
-# data.py
-"""
-Local Food-101 loader (images + metadata) for PyTorch Lightning.
-
-Your requested split policy:
-  - Use meta/train.txt for BOTH train and val (we create a deterministic split from it)
-  - Use meta/test.txt for test only
-
-Expected folder layout (Food-101 style):
-    <data_dir>/
-      images/
-        apple_pie/xxxx.jpg
-        baby_back_ribs/yyyy.jpg
-        ...
-      meta/
-        classes.txt
-        train.txt
-        test.txt
-
-Where meta/train.txt and meta/test.txt contain one sample per line like:
-    apple_pie/1005649
-    baby_back_ribs/100102
-(i.e., relative path under images/ WITHOUT the .jpg extension)
-
-This file provides:
-  - Food101Dataset: torch Dataset yielding (pixel_values, label)
-  - Food101DataModule: Lightning DataModule yielding train/val/test DataLoaders
-
-Notes:
-  - Augmentations are applied on-the-fly for train only.
-  - Val/test are deterministic.
-  - Normalization uses mean/std=(0.5,0.5,0.5) to match common HF ViT preproc for
-    'google/vit-base-patch16-224-in21k'.
-"""
-
-from __future__ import annotations
-
 import os
 import logging
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Sequence
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 from PIL import Image
 from torchvision import transforms
 
 import pytorch_lightning as L
+from torchvision.datasets import ImageFolder
 
-# Setup logger
 logger = logging.getLogger(__name__)
 
-
-# -----------------------
-# Helpers
-# -----------------------
 
 def _read_lines(path: str) -> List[str]:
     if not os.path.isfile(path):
@@ -141,267 +100,90 @@ def deterministic_split_indices(
         f"Split {n} samples into {len(train_idx)} train and {len(val_idx)} val")
     return train_idx, val_idx
 
-
-# -----------------------
-# Dataset
-# -----------------------
-
+#TODO: pad with black pixels, scale down, then no need for transform
 class Food101Dataset(Dataset):
-    """
-    Base dataset that indexes Food-101 samples from meta/<split>.txt.
-
-    If 'sample_list' is provided, it overrides reading meta/<split>.txt and is treated as the
-    list of relative sample paths (e.g., 'apple_pie/1005649').
-
-    Returns:
-        (pixel_values, label) where:
-          - pixel_values: FloatTensor [3, H, W]
-          - label: LongTensor scalar (class index)
-    """
-
-    def __init__(
-        self,
-        data_dir: str,
-        # "train" or "test" (optional if sample_list provided)
-        split: Optional[str] = None,
-        sample_list: Optional[Sequence[str]] = None,
-        transform: Optional[transforms.Compose] = None,
-        image_ext: str = ".jpg",
-        strict_files: bool = True,
-    ):
-        self.paths = Food101Paths(data_dir)
+    def __init__(self, samples, classes, transform=None):
+        self.samples = samples
+        self.classes = classes
         self.transform = transform
-        self.image_ext = image_ext
-        self.strict_files = strict_files
 
-        # 1) Class mapping
-        logger.debug(f"Loading classes from {self.paths.classes_txt}")
-        self.classes: List[str] = _read_lines(self.paths.classes_txt)
-        if not self.classes:
-            raise ValueError(f"No classes found in {self.paths.classes_txt}")
-        self.class_to_idx = {c: i for i, c in enumerate(self.classes)}
-        logger.info(f"Loaded {len(self.classes)} classes")
+    def __len__(self):
+        return len(self.samples)
 
-        # 2) Sample list
-        if sample_list is None:
-            if split is None:
-                raise ValueError(
-                    "Provide either split='train'/'test' or sample_list=[...].")
-            split_file = self.paths.split_txt(split)
-            logger.info(f"Loading samples from {split_file}")
-            rel_samples = _read_lines(split_file)
-        else:
-            rel_samples = list(sample_list)
-            logger.info(
-                f"Using provided sample_list with {len(rel_samples)} samples")
-
-        if not rel_samples:
-            raise ValueError("No samples found for dataset.")
-
-        # 3) Build (img_path, label_idx)
-        items: List[Tuple[str, int]] = []
-        missing: List[str] = []
-
-        for rel in rel_samples:
-            cls = rel.split("/", 1)[0]
-            if cls not in self.class_to_idx:
-                raise ValueError(f"Class '{cls}' not found in classes.txt")
-            label = self.class_to_idx[cls]
-            img_path = os.path.join(
-                self.paths.images_dir, rel + self.image_ext)
-
-            if self.strict_files and (not os.path.isfile(img_path)):
-                missing.append(img_path)
-                continue
-
-            items.append((img_path, label))
-
-        if self.strict_files and missing:
-            preview = "\n".join(missing[:10])
-            logger.error(
-                f"{len(missing)} image files not found. First missing:\n{preview}")
-            raise FileNotFoundError(
-                f"{len(missing)} image files referenced by metadata were not found. "
-                f"First missing paths:\n{preview}"
-            )
-
-        self.items = items
-        logger.info(f"Dataset initialized with {len(self.items)} samples")
-
-    def __len__(self) -> int:
-        return len(self.items)
-
-    def __getitem__(self, idx: int):
-        img_path, label = self.items[idx]
-        try:
-            img = Image.open(img_path).convert("RGB")
-        except Exception as e:
-            logger.error(f"Failed to load image {img_path}: {e}")
-            raise
-
-        if self.transform is not None:
-            pixel_values = self.transform(img)
-        else:
-            pixel_values = transforms.ToTensor()(img)
-
-        return pixel_values, torch.tensor(label, dtype=torch.long)
-
-
-# -----------------------
-# Lightning DataModule
-# -----------------------
+    def __getitem__(self, idx):
+        path, label = self.samples[idx]
+        # TODO: load directly with numpy for efficiency
+        img = Image.open(path).convert("RGB")
+        if self.transform:
+            img = self.transform(img)
+        return img, label
 
 class Food101DataModule(L.LightningDataModule):
-    """
-    Split policy (as requested):
-      - meta/train.txt -> split into train + val (deterministic, seedable)
-      - meta/test.txt  -> test only
-    """
-
     def __init__(
         self,
         data_dir: str,
         batch_size: int = 64,
-        num_workers: int = 4,
         img_size: int = 224,
+        num_workers: int = 4,
         val_fraction: float = 0.1,
-        split_seed: int = 42,
-        pin_memory: bool = True,
-        persistent_workers: bool = True,
-        prefetch_factor: Optional[int] = 2,
-        strict_files: bool = True,
-        data_fraction: float = 1.0,
+        split_seed: int = 42
     ):
         super().__init__()
-        self.data_dir = data_dir
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.img_size = img_size
-        self.val_fraction = val_fraction
-        self.split_seed = split_seed
-        self.pin_memory = pin_memory
-        self.persistent_workers = persistent_workers
-        self.prefetch_factor = prefetch_factor
-        self.strict_files = strict_files
-        self.data_fraction = data_fraction
-
-        self.num_classes: int = 101
-
-        self.train_dataset: Optional[Food101Dataset] = None
-        self.val_dataset: Optional[Food101Dataset] = None
-        self.test_dataset: Optional[Food101Dataset] = None
-
-        logger.info(f"DataModule initialized with batch_size={batch_size}, "
-                    f"num_workers={num_workers}, data_fraction={data_fraction}")
-
-    def prepare_data(self):
-        # Nothing to download (data is local), but we can validate structure lightly.
-        logger.info("Validating data directory structure...")
-        paths = Food101Paths(self.data_dir)
-        for p in [paths.images_dir, paths.meta_dir, paths.classes_txt,
-                  paths.split_txt("train"), paths.split_txt("test")]:
-            if not os.path.exists(p):
-                logger.error(f"Expected path not found: {p}")
-                raise FileNotFoundError(f"Expected path not found: {p}")
-        logger.info("Data directory structure validated successfully")
+        self.save_hyperparameters()
+        self.paths = Food101Paths(data_dir)
 
     def setup(self, stage: Optional[str] = None):
-        logger.info(f"Setting up data for stage: {stage}")
+        # 1. Load the master dataset (Logic inherited from ImageFolder)
+        full_dataset = ImageFolder(root=self.paths.images_dir)
 
-        # Read the canonical train/test lists once here
-        paths = Food101Paths(self.data_dir)
-        train_list = _read_lines(paths.split_txt("train"))
-        test_list = _read_lines(paths.split_txt("test"))
+        # 2. Map meta files to master indices
+        train_files = set(_read_lines(self.paths.split_txt("train")))
+        test_files = set(_read_lines(self.paths.split_txt("test")))
 
-        logger.info(
-            f"Original dataset: {len(train_list)} train, {len(test_list)} test samples")
+        all_train_indices = [i for i, (path, _) in enumerate(full_dataset.imgs)
+                             if self._get_rel_path(path) in train_files]
+        test_indices = [i for i, (path, _) in enumerate(full_dataset.imgs)
+                        if self._get_rel_path(path) in test_files]
 
-        # Subset data if data_fraction < 1.0 (for quick testing)
-        if self.data_fraction < 1.0:
-            n_train = max(1, int(len(train_list) * self.data_fraction))
-            n_test = max(1, int(len(test_list) * self.data_fraction))
-
-            # Use deterministic subset
-            g = torch.Generator()
-            g.manual_seed(self.split_seed)
-
-            train_indices = torch.randperm(len(train_list), generator=g)[
-                :n_train].tolist()
-            test_indices = torch.randperm(len(test_list), generator=g)[
-                :n_test].tolist()
-
-            train_list = [train_list[i] for i in train_indices]
-            test_list = [test_list[i] for i in test_indices]
-
-            logger.info(
-                f"Using {self.data_fraction*100:.1f}% of data: "
-                f"{len(train_list)} train samples, {len(test_list)} test samples"
+        # 3. Create Splits
+        if stage == "fit" or stage is None:
+            # Deterministically split the train indices into train/val
+            tr_local_idx, va_local_idx = deterministic_split_indices(
+                len(all_train_indices), self.hparams.val_fraction, self.hparams.split_seed
             )
 
-        # Deterministically split train_list -> train/val
-        tr_idx, va_idx = deterministic_split_indices(
-            n=len(train_list),
-            val_fraction=self.val_fraction,
-            seed=self.split_seed,
-        )
-        train_samples = [train_list[i] for i in tr_idx]
-        val_samples = [train_list[i] for i in va_idx]
+            # Map back to master dataset indices
+            train_idx = [all_train_indices[i] for i in tr_local_idx]
+            val_idx = [all_train_indices[i] for i in va_local_idx]
 
-        logger.info(f"Final split: {len(train_samples)} train, "
-                    f"{len(val_samples)} val, {len(test_list)} test")
+            self.train_dataset = Subset(full_dataset, train_idx)
+            self.val_dataset = Subset(full_dataset, val_idx)
 
-        train_tf = build_transforms(self.img_size, train=True)
-        eval_tf = build_transforms(self.img_size, train=False)
+            # Use distinct transforms for train vs val
+            self.train_dataset.dataset.transform = build_transforms(self.hparams.img_size, train=True)
+            self.val_dataset.dataset.transform = build_transforms(self.hparams.img_size, train=False)
 
-        # Build datasets
-        self.train_dataset = Food101Dataset(
-            data_dir=self.data_dir,
-            sample_list=train_samples,
-            transform=train_tf,
-            strict_files=self.strict_files,
-        )
-        self.val_dataset = Food101Dataset(
-            data_dir=self.data_dir,
-            sample_list=val_samples,
-            transform=eval_tf,
-            strict_files=self.strict_files,
-        )
-        self.test_dataset = Food101Dataset(
-            data_dir=self.data_dir,
-            sample_list=test_list,
-            transform=eval_tf,
-            strict_files=self.strict_files,
-        )
+        if stage == "test" or stage is None:
+            self.test_dataset = Subset(full_dataset, test_indices)
+            self.test_dataset.dataset.transform = build_transforms(self.hparams.img_size, train=False)
 
-        self.num_classes = len(self.train_dataset.classes)
+    def _get_rel_path(self, full_path: str) -> str:
+        rel = os.path.relpath(full_path, self.paths.images_dir)
+        return os.path.splitext(rel)[0]
 
-    def _dl(self, ds: Dataset, shuffle: bool, drop_last: bool = False) -> DataLoader:
-        return DataLoader(
-            ds,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers and self.num_workers > 0,
-            prefetch_factor=self.prefetch_factor if self.num_workers > 0 else None,
-            drop_last=drop_last,
-        )
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size=self.hparams.batch_size,
+                          shuffle=True, num_workers=self.hparams.num_workers)
 
-    def train_dataloader(self) -> DataLoader:
-        assert self.train_dataset is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.train_dataset, shuffle=True, drop_last=False)
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size=self.hparams.batch_size,
+                          num_workers=self.hparams.num_workers)
 
-    def val_dataloader(self) -> DataLoader:
-        assert self.val_dataset is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.val_dataset, shuffle=False, drop_last=True)
-
-    def test_dataloader(self) -> DataLoader:
-        assert self.test_dataset is not None, "Call setup() before requesting dataloaders."
-        return self._dl(self.test_dataset, shuffle=False, drop_last=True)
-
+    def test_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size=self.hparams.batch_size,
+                          num_workers=self.hparams.num_workers)
 
 if __name__ == "__main__":
-    # Setup logging for standalone testing
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -409,7 +191,7 @@ if __name__ == "__main__":
 
     # Usage:
     #   FOOD101_DIR=/path/to/food-101 python data.py
-    data_dir = os.environ.get("FOOD101_DIR", "/workspaces/mlopsproj/data")
+    data_dir = "/workspaces/mlopsproj/data"
 
     dm = Food101DataModule(
         data_dir=data_dir,
@@ -431,6 +213,5 @@ if __name__ == "__main__":
     xb, yb = next(iter(dm.test_dataloader()))
     print("Test batch:", xb.shape, yb.shape, xb.dtype, yb.dtype)
 
-    print("Num classes:", dm.num_classes)
     # type: ignore[attr-defined]
-    print("First 5 classes:", dm.train_dataset.classes[:5])
+    print("First 5 classes:", dm.train_dataset.dataset.classes[:5])
