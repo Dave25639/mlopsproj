@@ -19,7 +19,7 @@ dependencies = [
     "dvc>=3.66.1",
     "dvc-s3>=3.3.0",
     "fastapi==0.115.6",
-    "torch==2.6.0",
+    "torch==2.9.1",
     "typer==0.15.1",
     "uvicorn==0.34.0",
     "transformers>=4.46.0",
