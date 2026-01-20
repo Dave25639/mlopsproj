@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+
 from PIL import Image
 
 IMG_SIZE = 224

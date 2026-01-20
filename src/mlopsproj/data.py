@@ -1,17 +1,16 @@
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
-from pathlib import Path
 import pytorch_lightning as L
 import torch
 from PIL import Image
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from sklearn.model_selection import train_test_split
-from PIL import Image
 
 logger = logging.getLogger(__name__)
 
