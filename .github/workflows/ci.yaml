@@ -27,8 +27,8 @@ jobs:
       - name: Run Linting
         run: uv run ruff check src/
 
-     #- name: Run Tests
-      #  run: uv run pytest
+      - name: Run Tests
+        run: uv run pytest
 
   # Job 2: Verify the containerization
   # This runs only if the tests pass (needs: quality-and-tests)
