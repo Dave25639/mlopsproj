@@ -1,5 +1,7 @@
 name: Project CI & Docker Check
 
+
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -45,7 +47,8 @@ jobs:
         with:
           context: .
           # Point this to your specific Dockerfile path
-          file: ./dockerfiles/train.Dockerfile
+          file: ./dockerfiles/train.dockerfile
+          #file: ./dockerfiles/train.Dockerfile
           push: false # Only testing the build, not pushing to a registry yet
           tags: mlopsproj:latest
           cache-from: type=gha
