@@ -17,9 +17,9 @@
   - [x] `requirements.txt` / `requirements_dev.txt`, **or**
   - [x] `pyproject.toml` / `uv.lock` (M2 + M6)
 - [x] Comply with good coding practices (PEP8) (M7)
-- [ ] Document essential parts of the code (docstrings/comments) (M7)
+- [x] Document essential parts of the code (docstrings/comments) (M7)
 - [x] Set up version control for all or part of the data (M8)
-- [ ] Add command-line interfaces (CLI) and project commands where appropriate (M9)
+- [x] Add command-line interfaces (CLI) and project commands where appropriate (M9)
 - [x] Construct one or more Dockerfiles (M10)
 - [x] Build Docker images locally and verify they work (M10)
 - [x] Write one or more configuration files for experiments (M11)
