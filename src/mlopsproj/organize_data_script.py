@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
+
 def split_data(base_dir="/workspaces/mlopsproj/data"):
     base = Path(base_dir)
     src_images = base / "raw" / "images"

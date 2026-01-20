@@ -1,14 +1,13 @@
-import os
 import logging
+import os
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Sequence
-
-import torch
-from torch.utils.data import Dataset, DataLoader, Subset
-from PIL import Image
-from torchvision import transforms
+from typing import List, Optional, Sequence, Tuple
 
 import pytorch_lightning as L
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader, Dataset, Subset
+from torchvision import transforms
 from torchvision.datasets import ImageFolder
 
 logger = logging.getLogger(__name__)

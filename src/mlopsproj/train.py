@@ -23,26 +23,25 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import torch
 import pytorch_lightning as L
-
+import torch
 from pytorch_lightning.callbacks import (
-    ModelCheckpoint,
     EarlyStopping,
     LearningRateMonitor,
+    ModelCheckpoint,
     RichProgressBar,
 )
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
-from pytorch_lightning.profilers import SimpleProfiler, PyTorchProfiler
+from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
 
-from .data import Food101DataModule
-from .model import ViTClassifier
 from .callbacks import (
+    DetailedProgressCallback,
+    GradientLoggingCallback,
     LogPredictionsCallback,
     MetricsHistoryCallback,
-    GradientLoggingCallback,
-    DetailedProgressCallback,
 )
+from .data import Food101DataModule
+from .model import ViTClassifier
 
 
 def setup_logging(output_dir: Path, experiment_name: str, verbose: bool = False) -> None:
