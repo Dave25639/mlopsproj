@@ -11,7 +11,7 @@ def setup_food101_datamodule():
         batch_size=16,
         num_workers=2,
         val_fraction=0.1,
-        seed=42,
+        split_seed=42,
         augment_train=False
     )
     dm.setup()

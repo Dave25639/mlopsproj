@@ -99,7 +99,8 @@ class Food101DataModule(L.LightningDataModule):
         batch_size: int = 64,
         num_workers: int = 4,
         val_fraction: float = 0.1,
-        seed: int = 42,
+        data_fraction: float = 1,
+        split_seed: int = 42,
         augment_train: bool = False
     ):
         super().__init__()
@@ -134,7 +135,7 @@ class Food101DataModule(L.LightningDataModule):
                 range(len(labels)),
                 test_size=self.hparams.val_fraction,
                 stratify=labels,
-                random_state=self.hparams.seed
+                random_state=self.hparams.split_seed
             )
 
             train_pairs = [samples[i] for i in train_idx]
@@ -197,7 +198,7 @@ if __name__ == "__main__":
         batch_size=8,
         num_workers=2,
         val_fraction=0.1,
-        seed=42,
+        split_seed=42,
         augment_train=True
     )
 

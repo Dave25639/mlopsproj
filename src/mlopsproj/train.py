@@ -114,7 +114,6 @@ def parse_args() -> argparse.Namespace:
                         default=32, help="Batch size")
     parser.add_argument("--num_workers", type=int,
                         default=4, help="DataLoader workers")
-    parser.add_argument("--img_size", type=int, default=224, help="Image size")
     parser.add_argument(
         "--val_fraction",
         type=float,
@@ -356,7 +355,6 @@ def main():
         data_dir=args.data_dir,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
-        img_size=args.img_size,
         val_fraction=args.val_fraction,
         split_seed=args.seed,
         data_fraction=args.data_fraction,

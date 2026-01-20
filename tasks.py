@@ -29,11 +29,10 @@ def train(
     data_dir: str = "data",
     batch_size: int = 4,
     max_epochs: int = 2,
-    data_fraction: float = 0.001,
+    data_fraction: float = 1,
     learning_rate: float = 3e-4,
     use_wandb: bool = False,
     experiment_name: str = "food101_vit",
-    **kwargs
 ) -> None:
     """
     Train model with small dataset for quick testing.
@@ -63,13 +62,13 @@ def train(
     if use_wandb:
         cmd_parts.append("--use_wandb")
 
-    # Add any additional kwargs as command-line arguments
-    for key, value in kwargs.items():
-        if value is not None:
-            if isinstance(value, bool) and value:
-                cmd_parts.append(f"--{key}")
-            elif not isinstance(value, bool):
-                cmd_parts.append(f"--{key} {value}")
+    # # Add any additional kwargs as command-line arguments
+    # for key, value in kwargs.items():
+    #     if value is not None:
+    #         if isinstance(value, bool) and value:
+    #             cmd_parts.append(f"--{key}")
+    #         elif not isinstance(value, bool):
+    #             cmd_parts.append(f"--{key} {value}")
 
     cmd = " ".join(cmd_parts)
     ctx.run(cmd, echo=True, pty=not WINDOWS)

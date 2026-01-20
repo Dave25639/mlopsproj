@@ -34,7 +34,7 @@
 
 ## Week 2
 
-- [ ] Write unit tests for the data pipeline (M16)
+- [x] Write unit tests for the data pipeline (M16)
 - [ ] Write unit tests for model construction and/or training (M16)
 - [ ] Calculate code coverage (M16)
 - [x] Set up continuous integration (CI) on GitHub (M17)
