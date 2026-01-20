@@ -1,0 +1,15 @@
+defaults:
+  - data: data
+  - model: model
+  - train: train
+  - logging: logging
+
+experiment_name: "test"
+output_dir: "outputs"
+seed: 42
+
+num_workers: 4
+batch_size: 32
+
+profiler: "simple"
+run_test: True

@@ -1,0 +1,6 @@
+accumulate_grad_batches: true
+max_epochs: 1
+early_stopping_patience: 3
+mode: "max"
+verbose: True
+fast_dev_run: True

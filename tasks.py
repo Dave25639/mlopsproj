@@ -24,54 +24,11 @@ def preprocess_data(ctx: Context, input_dir: str = "data/raw", output_dir: str =
 
 
 @task
-def train(
-    ctx: Context,
-    data_dir: str = "data",
-    batch_size: int = 4,
-    max_epochs: int = 2,
-    data_fraction: float = 1,
-    learning_rate: float = 3e-4,
-    use_wandb: bool = False,
-    experiment_name: str = "food101_vit",
-) -> None:
+def train(ctx: Context) -> None:
     """
     Train model with small dataset for quick testing.
-
-    Args:
-        data_dir: Path to Food-101 dataset directory
-        batch_size: Batch size for training (default: 4)
-        max_epochs: Maximum number of training epochs (default: 2)
-        data_fraction: Fraction of dataset to use (default: 0.001 for quick testing)
-        learning_rate: Learning rate
-        use_wandb: Enable Weights & Biases logging
-        experiment_name: Name of the experiment
-        **kwargs: Additional arguments passed to train.py
     """
-    # Build base command
-    cmd_parts = [
-        f"uv run python -m {PROJECT_NAME}.train",
-        f"--data_dir {data_dir}",
-        f"--batch_size {batch_size}",
-        f"--max_epochs {max_epochs}",
-        f"--data_fraction {data_fraction}",
-        f"--learning_rate {learning_rate}",
-        f"--experiment_name {experiment_name}",
-    ]
-
-    # Add optional flags
-    if use_wandb:
-        cmd_parts.append("--use_wandb")
-
-    # # Add any additional kwargs as command-line arguments
-    # for key, value in kwargs.items():
-    #     if value is not None:
-    #         if isinstance(value, bool) and value:
-    #             cmd_parts.append(f"--{key}")
-    #         elif not isinstance(value, bool):
-    #             cmd_parts.append(f"--{key} {value}")
-
-    cmd = " ".join(cmd_parts)
-    ctx.run(cmd, echo=True, pty=not WINDOWS)
+    ctx.run(f"uv run python -m {PROJECT_NAME}.train", echo=True, pty=not WINDOWS)
 
 
 @task

@@ -1,0 +1,8 @@
+use_wandb: false
+wandb_project: ""
+wandb_entity: ""
+
+
+verbose: True
+log_gradients: True
+log_predictions: True
