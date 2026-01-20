@@ -1,0 +1,17 @@
+name: Hello UV World
+
+on: [push] # Runs every time you push code
+
+jobs:
+  hello-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Python Hello World
+        # This uses uv to run a quick one-liner
+        run: uv run python -c "print('Hello from UV and GitHub Actions!')"

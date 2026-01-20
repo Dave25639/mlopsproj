@@ -1,0 +1,55 @@
+name: Project CI & Docker Check
+
+
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # Job 1: Verify the code logic and style
+  quality-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: uv sync --frozen
+
+      - name: Run Linting
+        run: uv run ruff check src/
+
+     #- name: Run Tests
+      #  run: uv run pytest
+
+  # Job 2: Verify the containerization
+  # This runs only if the tests pass (needs: quality-and-tests)
+  docker-build:
+    needs: quality-and-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # Point this to your specific Dockerfile path
+          file: ./dockerfiles/train.dockerfile
+          #file: ./dockerfiles/train.Dockerfile
+          push: false # Only testing the build, not pushing to a registry yet
+          tags: mlopsproj:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

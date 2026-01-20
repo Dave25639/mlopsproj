@@ -11,10 +11,10 @@ Includes:
 from __future__ import annotations
 
 import logging
-from typing import Optional, List
+from typing import List, Optional
 
-import torch
 import pytorch_lightning as L
+import torch
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities import rank_zero_only
 

@@ -12,15 +12,13 @@ This module:
 
 from __future__ import annotations
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
+import pytorch_lightning as L  # type: ignore
 import torch
 import torch.nn as nn
 from torchmetrics import Accuracy, MetricCollection
-
-import pytorch_lightning as L  # type: ignore
-
-from transformers import ViTForImageClassification, ViTConfig
+from transformers import ViTConfig, ViTForImageClassification
 
 
 class ViTClassifier(L.LightningModule):
