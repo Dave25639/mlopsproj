@@ -1,0 +1,49 @@
+name: Train on Vertex AI
+
+# Trigger this workflow manually or when a new training image is ready
+on:
+  workflow_dispatch: # Manual trigger from GitHub UI
+  push:
+    branches: [ master ]
+    paths:
+      - 'configs/train.yaml' # Trigger on config change
+      - 'src/mlopsproj/train.py' # Trigger on training code change
+
+jobs:
+  # 1. FIRST, ensure the Docker image is built (reuses your Task 2)
+  build-image:
+    uses: ./.github/workflows/build-docker.yaml # Reuse your existing workflow
+    with:
+      push-to-registry: true # Ensure it pushes to GHCR
+
+  # 2. THEN, submit a Vertex AI job using that new image
+  submit-vertex-job:
+    needs: build-image # Waits for the image to be built/pushed
+    runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: us-central1
+      IMAGE_URI: ghcr.io/${{ github.repository }}-train:${{ github.sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker --quiet
+
+      - name: Submit Vertex AI Custom Training Job
+        run: |
+          gcloud ai custom-jobs create \
+            --region=$GCP_REGION \
+            --display-name="mlopsproj-${{ github.sha }}" \
+            --worker-pool-spec=machine-type=n1-standard-4,replica-count=1,container-image-uri=$IMAGE_URI \
+            --args="--config-dir=configs","--config-name=train"
