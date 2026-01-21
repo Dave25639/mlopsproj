@@ -1,6 +1,8 @@
 [core]
-    remote = origin
+    remote = gcpstore
     autostage = true
 ['remote "origin"']
     url = s3://dvc
     endpointurl = https://dagshub.com/Dave25639/mlopsproj.s3
+['remote "gcpstore"']
+    url = gs://mlopsproj-lier-20260121193608/dvcstore

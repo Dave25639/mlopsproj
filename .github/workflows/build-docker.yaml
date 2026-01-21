@@ -1,0 +1,31 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'dockerfiles/**'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: |
+        docker build -f dockerfiles/train.dockerfile -t mlopsproj-train .
+
+    - name: Test the image
+      run: |
+        docker run --rm mlopsproj-train uv --version
+        docker run --rm mlopsproj-train dvc --version
+        docker run --rm mlopsproj-train python --version
