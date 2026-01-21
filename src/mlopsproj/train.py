@@ -157,7 +157,7 @@ def create_profiler(profiler_type: Optional[str], output_dir: Path):
 
     return None
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+@hydra.main(version_base="1.3", config_path="../../configs", config_name="config")
 def main(cfg: DictConfig):
     # Create output directory
     output_dir = Path(cfg.model.output_dir)
