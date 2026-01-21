@@ -10,7 +10,7 @@ COPY README.md README.md
 COPY LICENSE LICENSE
 
 RUN uv sync --frozen
-
+COPY configs configs/
 # DVC Data Pull
 # RUN uv run dvc init --no-scm
 # COPY .dvc/config .dvc/config
