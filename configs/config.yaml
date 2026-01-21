@@ -3,6 +3,7 @@ defaults:
   - model: model
   - train: train
   - logging: logging
+  - _self_
 
 experiment_name: "test"
 output_dir: "outputs"
