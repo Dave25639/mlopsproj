@@ -160,7 +160,7 @@ def create_profiler(profiler_type: Optional[str], output_dir: Path):
 @hydra.main(version_base="1.3", config_path="../../configs", config_name="config")
 def main(cfg: DictConfig):
     # Create output directory
-    output_dir = Path(cfg.model.output_dir)
+    output_dir = Path(cfg.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Setup logging FIRST
