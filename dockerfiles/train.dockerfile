@@ -18,4 +18,4 @@ RUN uv sync --frozen
 # RUN uv run dvc config core.no_scm true
 # RUN uv run dvc pull
 
-ENTRYPOINT ["uv", "run", "src/mlopsproj/train.py"]
+ENTRYPOINT ["uv", "run", "python", "-m", "mlopsproj.train"]
