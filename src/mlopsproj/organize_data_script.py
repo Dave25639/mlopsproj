@@ -7,7 +7,7 @@ def split_data(base_dir="data"):
     base = Path(base_dir)
     src_images = base / "raw" / "images"
     meta_dir = base / "meta"
-    processed_dir = base / "processed"
+    processed_dir = base / "processed"/ "images"
 
     for split in ["train", "test"]:
         split_file = meta_dir / f"{split}.txt"
