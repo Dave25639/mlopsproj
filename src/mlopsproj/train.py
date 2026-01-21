@@ -309,14 +309,14 @@ def main(cfg: DictConfig):
                 # Log hyperparameters
                 exp_logger.experiment.config.update({
                     "batch_size": cfg.batch_size,
-                    "learning_rate": cfg.model.learning_rate,
-                    "weight_decay": cfg.model.weight_decay,
+                    "learning_rate": cfg.model.architecture.learning_rate,
+                    "weight_decay": cfg.model.architecture.weight_decay,
                     "model_name": cfg.model.architecture.model_name,
                     "data_fraction": cfg.data.data_fraction,
                     "freeze_backbone": cfg.model.freeze,
                     "max_epochs": cfg.train.max_epochs,
-                    "warmup_steps": cfg.model.warmup_steps,
-                    "dropout": cfg.model.dropout,
+                    "warmup_steps": cfg.model.architecture.warmup_steps,
+                    "dropout": cfg.model.architecture.dropout,
                 })
 
                 logger.info(
