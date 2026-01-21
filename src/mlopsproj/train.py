@@ -311,7 +311,7 @@ def main(cfg: DictConfig):
                     "batch_size": cfg.batch_size,
                     "learning_rate": cfg.model.learning_rate,
                     "weight_decay": cfg.model.weight_decay,
-                    "model_name": cfg.model.model_name,
+                    "model_name": cfg.model.architecture.model_name,
                     "data_fraction": cfg.data.data_fraction,
                     "freeze_backbone": cfg.model.freeze,
                     "max_epochs": cfg.train.max_epochs,
@@ -367,7 +367,7 @@ def main(cfg: DictConfig):
     logger.info("=" * 80)
     logger.info(f"Experiment: {cfg.experiment_name}")
     logger.info(f"Output directory: {output_dir}")
-    logger.info(f"Model: {cfg.model.model_name}")
+    logger.info(f"Model: {cfg.model.architecture.model_name}")
     logger.info(f"Dataset: Food-101 ({cfg.data.data_fraction*100:.1f}% of data)")
     logger.info(f"Num classes: {datamodule.num_classes}")
     logger.info(f"Train samples: {len(datamodule.train_dataset)}")
