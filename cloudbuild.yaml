@@ -1,0 +1,19 @@
+﻿steps:
+  # Build your training Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'dockerfiles/train.dockerfile'  # ← lowercase 'dockerfile' extension!
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
+      - '.'
+
+  # Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
+
+images:
+  - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
