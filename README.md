@@ -23,7 +23,7 @@
 - [x] Construct one or more Dockerfiles (M10)
 - [x] Build Docker images locally and verify they work (M10)
 - [x] Write one or more configuration files for experiments (M11)
-- [ ] Use **Hydra** for configuration loading and hyperparameter management (M11)
+- [x] Use **Hydra** for configuration loading and hyperparameter management (M11)
 - [x] Use profiling to optimize performance-critical code (M12)
 - [x] Use logging to log important events (M14)
 - [x] Use **Weights & Biases** to log training progress and artifacts (M14)
@@ -35,8 +35,8 @@
 ## Week 2
 
 - [x] Write unit tests for the data pipeline (M16)
-- [ ] Write unit tests for model construction and/or training (M16)
-- [ ] Calculate code coverage (M16)
+- [x] Write unit tests for model construction and/or training (M16)
+- [x] Calculate code coverage (M16)
 - [x] Set up continuous integration (CI) on GitHub (M17)
 - [ ] Add caching and multi-OS / multi-Python / multi-PyTorch testing to CI (M17)
 - [x] Add linting to the CI pipeline (M17)

@@ -157,10 +157,10 @@ def create_profiler(profiler_type: Optional[str], output_dir: Path):
 
     return None
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="config")
+@hydra.main(version_base="1.3", config_path="../../configs", config_name="config")
 def main(cfg: DictConfig):
     # Create output directory
-    output_dir = Path(cfg.model.output_dir)
+    output_dir = Path(cfg.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Setup logging FIRST
@@ -309,14 +309,14 @@ def main(cfg: DictConfig):
                 # Log hyperparameters
                 exp_logger.experiment.config.update({
                     "batch_size": cfg.batch_size,
-                    "learning_rate": cfg.model.learning_rate,
-                    "weight_decay": cfg.model.weight_decay,
-                    "model_name": cfg.model.model_name,
+                    "learning_rate": cfg.model.architecture.learning_rate,
+                    "weight_decay": cfg.model.architecture.weight_decay,
+                    "model_name": cfg.model.architecture.model_name,
                     "data_fraction": cfg.data.data_fraction,
                     "freeze_backbone": cfg.model.freeze,
                     "max_epochs": cfg.train.max_epochs,
-                    "warmup_steps": cfg.model.warmup_steps,
-                    "dropout": cfg.model.dropout,
+                    "warmup_steps": cfg.model.architecture.warmup_steps,
+                    "dropout": cfg.model.architecture.dropout,
                 })
 
                 logger.info(
@@ -367,7 +367,7 @@ def main(cfg: DictConfig):
     logger.info("=" * 80)
     logger.info(f"Experiment: {cfg.experiment_name}")
     logger.info(f"Output directory: {output_dir}")
-    logger.info(f"Model: {cfg.model.model_name}")
+    logger.info(f"Model: {cfg.model.architecture.model_name}")
     logger.info(f"Dataset: Food-101 ({cfg.data.data_fraction*100:.1f}% of data)")
     logger.info(f"Num classes: {datamodule.num_classes}")
     logger.info(f"Train samples: {len(datamodule.train_dataset)}")
@@ -377,12 +377,12 @@ def main(cfg: DictConfig):
     logger.info(f"Gradient accumulation: {cfg.train.accumulate_grad_batches}")
     logger.info(
         f"Effective batch size: {cfg.batch_size * cfg.train.accumulate_grad_batches}")
-    logger.info(f"Learning rate: {cfg.model.learning_rate}")
-    logger.info(f"Weight decay: {cfg.model.weight_decay}")
-    logger.info(f"Warmup steps: {cfg.model.warmup_steps}")
+    logger.info(f"Learning rate: {cfg.model.architecture.learning_rate}")
+    logger.info(f"Weight decay: {cfg.model.architecture.weight_decay}")
+    logger.info(f"Warmup steps: {cfg.model.architecture.warmup_steps}")
     logger.info(f"Max epochs: {cfg.train.max_epochs}")
     logger.info(f"Total steps: {max_steps}")
-    logger.info(f"Freeze backbone: {cfg.model.freeze_backbone}")
+    logger.info(f"Freeze backbone: {cfg.model.architecture.freeze_backbone}")
     logger.info(f"Logger: {'W&B' if cfg.logging.use_wandb else 'TensorBoard'}")
     logger.info(f"Profiler: {cfg.profiler if cfg.profiler else 'None'}")
     logger.info("=" * 80 + "\n")

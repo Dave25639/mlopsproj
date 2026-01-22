@@ -66,10 +66,12 @@ class DataPaths:
 def build_transforms(train: bool = False):
     mean = (0.5, 0.5, 0.5)
     std = (0.5, 0.5, 0.5)
-
+    
     if train:
-        # optional augmentations
+        # Training with augmentations
         return transforms.Compose([
+            transforms.Resize(256),                    # ADD THIS
+            transforms.CenterCrop(224),                # ADD THIS
             transforms.RandomHorizontalFlip(),
             transforms.ColorJitter(
                 brightness=0.2,
@@ -80,9 +82,11 @@ def build_transforms(train: bool = False):
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
-
-    # default for val/test
+    
+    # Validation/test without augmentations
     return transforms.Compose([
+        transforms.Resize(256),                        # ADD THIS
+        transforms.CenterCrop(224),                    # ADD THIS
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
     ])

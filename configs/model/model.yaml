@@ -1,14 +1,14 @@
 architecture:
   model_name: google/vit-base-patch16-224-in21k
-  freeze: true
+  freeze_backbone: true     # Changed from 'freeze'
   dropout: 0.1
   learning_rate: 0.003
   weight_decay: 0.001
-  warmup_steps: 1
-  max_steps: 1
+  warmup_steps: 500         # Changed from 1
+  max_steps: null           # Changed from 1
 
 checkpointing:
-  dirpath: ""
+  dirpath: "checkpoints"    # Changed from ""
   monitor: "val/acc"
   mode: "max"
   save_top_k: 3
