@@ -9,8 +9,8 @@ experiment_name: "test"
 output_dir: "outputs"
 seed: 42
 
-num_workers: 4
-batch_size: 32
+num_workers: 0
+batch_size: 4
 
 profiler: "simple"
 run_test: True
