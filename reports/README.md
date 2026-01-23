@@ -274,7 +274,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 9 fill here ---
+We made use of both branches and pull requests in our project. We used feature branches for developing new functionality, such as adding the API, implementing the frontend, or setting up CI workflows. When working on a feature, we would create a new branch from master, make our changes, and then open a pull request to merge back into master.
+
+Our pull requests trigger automated checks through GitHub Actions, including linting, unit tests, and Docker build verification. This ensures that code quality standards are met before merging. Pull requests also served as a way to review our own code before integrating it, helping catch mistakes and ensuring the codebase remains stable. Even though we are a small group, using branches and pull requests helped us maintain a clean master branch that always contains working code, and it made it easier to track what changes were made and why. This workflow is especially valuable in larger projects where multiple developers work simultaneously, as it prevents conflicts and allows for code review before changes are merged.
 
 ### Question 10
 
@@ -289,7 +291,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 10 fill here ---
+We did make use of DVC in the following way: we used DVC to version control our Food 101 dataset, storing the raw images, processed data, and metadata files. The actual data files are stored in a GCP bucket, while DVC tracks pointers to these files in `.dvc` files that are committed to git. This allows us to keep our repository small while still tracking which version of the data was used for each experiment.
+
+In the end it helped us in several ways for controlling the data part of our pipeline. First, we can easily switch between different versions of the dataset by checking out different DVC commits, which is crucial for reproducibility. Second, team members can pull the dataset from the remote storage without needing to manually download large files. Third, when we update the dataset, DVC tracks these changes and we can see exactly what changed between versions. This is especially valuable when debugging why model performance changed between experiments, as we can verify if it was due to data changes or code changes.
 
 ### Question 11
 
@@ -306,7 +310,11 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 11 fill here ---
+We have organized our continuous integration into several separate workflow files: one for running unit tests and code coverage, one for code linting and formatting checks, one for building Docker images, and one for pre commit hooks. In particular for our testing workflow, we used a matrix strategy to test across multiple operating systems (Ubuntu, Windows, macOS) and Python versions (3.11 and 3.12), ensuring our code works across different environments.
+
+Our CI pipeline runs automatically on every push to main and on every pull request. The tests workflow runs pytest with coverage reporting, the linting workflow checks code style with Ruff and type checking with MyPy, and the Docker build workflow verifies that our containerized applications build correctly. We make use of caching in our workflows through GitHub Actions cache, which speeds up dependency installation by caching the uv package manager cache between runs. This significantly reduces CI run times, especially important when running tests across multiple OS and Python version combinations.
+
+An example of a triggered workflow can be seen here: https://github.com/NicoELNO/mlopsproj/actions/workflows/tests.yaml
 
 ## Running code and tracking experiments
 
@@ -325,7 +333,7 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 12 fill here ---
+We used Hydra for configuration management with YAML config files organized in the `configs/` directory. To run an experiment, we use: `python -m src.mlopsproj.train`. Hydra automatically loads the default config from `configs/config.yaml`, which composes settings from sub configs for data, model, train, and logging. We can override any parameter from the command line, for example: `python -m src.mlopsproj.train batch_size=32 model.architecture.learning_rate=1e-4 train.max_epochs=10`. This makes it easy to run experiments with different hyperparameters without modifying code or config files.
 
 ### Question 13
 
@@ -340,7 +348,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 13 fill here ---
+We made use of config files with Hydra to ensure reproducibility. Whenever an experiment is run, the following happens: first, Hydra saves the complete configuration used for that experiment to an `outputs/` directory with a timestamp, so we always know exactly which settings were used. Second, we set a random seed (configurable via `seed` in the config) and use PyTorch Lightning's `seed_everything()` to ensure deterministic behavior. Third, we log all hyperparameters and configuration to both Weights and Biases and local log files, including model architecture, learning rate, batch size, and data settings.
+
+To reproduce an experiment, one would need to: check out the specific git commit that was used, ensure the same data version is available (via DVC checkout), and run the training script. The saved config file in the outputs directory contains all hyperparameters, so we can either use that exact config or manually specify the same parameters. Additionally, model checkpoints are saved with the experiment, so we can load the exact trained model weights. This combination of version controlled code, version controlled data via DVC, saved configs, and logged hyperparameters ensures we can reproduce any experiment.
 
 ### Question 14
 
@@ -357,7 +367,14 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 14 fill here ---
+As seen in the first image we have tracked training and validation loss, which both inform us about how well our model is learning and whether it is overfitting during our experiments. We also track accuracy metrics for both training and validation sets, which tells us the actual classification performance of our Vision Transformer model on the Food 101 dataset.
+
+As seen in the second image we are also tracking hyperparameters such as learning rate, batch size, weight decay, and model architecture settings. These are logged to W&B so we can compare different experiments and understand which hyperparameter combinations lead to better performance. Additionally, we log model checkpoints to W&B, allowing us to download and use the best performing models later.
+
+The metrics we track are important because loss values help us monitor training progress and detect issues like vanishing gradients or overfitting early. Accuracy metrics give us the actual performance we care about for the classification task. Hyperparameter logging enables us to run multiple experiments and systematically identify the best configuration. Without this tracking, it would be impossible to compare experiments or reproduce successful runs.
+
+![W&B Training Metrics](figures/wandb_metrics.png)
+![W&B Hyperparameters](figures/wandb_hyperparameters.png)
 
 ### Question 15
 
@@ -372,7 +389,13 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 15 fill here ---
+For our project we developed two Docker images: one for training and one for API inference and deployment. The training Dockerfile sets up the environment with all dependencies, pulls data from DVC, and runs the training script. The API Dockerfile creates a lightweight container for serving the model via FastAPI.
+
+For example, to run the training docker image, we first build it with: `docker build -f dockerfiles/train.dockerfile -t mlopsproj-train .` Then we can run training with: `docker run --rm mlopsproj-train`. The container automatically pulls the data via DVC, sets up the environment, and executes the training script. For the API, we build with: `docker build -f dockerfiles/api.dockerfile -t mlopsproj-api .` and run with: `docker run -p 8000:8000 mlopsproj-api` to serve the model on port 8000.
+
+Using Docker ensures that our training and deployment environments are identical across different machines and cloud platforms, eliminating the "it works on my machine" problem. This is especially important when training on GCP Compute Engine, as we can use the exact same container that we tested locally.
+
+Link to training dockerfile: https://github.com/NicoELNO/mlopsproj/blob/master/dockerfiles/train.dockerfile
 
 ### Question 16
 
@@ -387,7 +410,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 16 fill here ---
+Debugging method was primarily through comprehensive logging and error handling. We set up detailed logging that writes to both console and log files, which helped us track down issues by examining the log output. When errors occurred, we used Python's exception handling with detailed error messages and stack traces to identify where problems happened. We also used print statements and logger.debug() calls for quick debugging of specific issues.
+
+We did profiling runs of our training code using PyTorch Lightning's SimpleProfiler and PyTorchProfiler. The profiling showed that most of the training time was spent in the forward and backward passes during training batches, which is expected for deep learning. We also found that checkpoint saving was taking a noticeable amount of time, which helped us optimize when checkpoints are saved. The profiler output helped us understand the performance bottlenecks and confirmed that the data loading was efficient. While the code is not perfect, profiling helped us identify areas that were working well and areas that could potentially be optimized further, such as reducing checkpoint frequency for faster iteration during development.
 
 ## Working in the cloud
 
@@ -405,6 +430,8 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > Answer:
 
 --- question 17 fill here ---
+Our project currently utilizes two primary services for cloud-based model training: Virtual Machine (VM) instances for computation and an Artifact Registry for Docker image management. While we also leverage Google Cloud Storage (GCS) buckets to store raw image data and DVC files, these storage components remain separate from the active cloud training execution environment.
+
 
 ### Question 18
 
@@ -420,6 +447,12 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > Answer:
 
 --- question 18 fill here ---
+The backbone of our GCP infrastructure is Compute Engine, which provides the necessary computational resources for our model training. We provisioned a specific VM instance named "mlops" located in the europe-west1-d zone.
+
+
+Regarding hardware, we utilized the e2-medium machine type. This general-purpose instance features an Intel Broadwell CPU platform and a 10 GB persistent boot disk running Debian 12 Bookworm.
+
+To ensure a portable and consistent environment, we start the training process using a custom Docker container. Our workflow involves building images via Cloud Build and storing them in the Artifact Registry. Specifically, we execute our training by pulling the mlops-train:latest image from our repository and running it directly on the VM.
 
 ### Question 19
 
@@ -433,7 +466,7 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 ### Question 20
 
 > **Upload 1-2 images of your GCP artifact registry, such that we can see the different docker images that you have**
-> **stored. You can take inspiration from [this figure](figures/registry.png).**
+> **stored. You can take inspiration from [this figure](figures/registry.png).** + docker image
 >
 > Answer:
 
@@ -462,6 +495,11 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > Answer:
 
 --- question 22 fill here ---
+We successfully managed to train our model in the cloud using Compute Engine. Our process involved a containerized workflow: first, we built our training image using Cloud Build with the command gcloud builds submit --config cloudbuild.yaml. This image was then stored in the Artifact Registry under the repository my-container-repo.
+
+To execute the training, we accessed our e2-medium VM via SSH and pulled the custom container. We started the training process by running: docker run --rm europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:latest.
+
+We chose Compute Engine over Vertex AI because it granted us full control over the operating environment and simplified the integration of our existing Docker-based workflow. While Vertex AI offers a unified managed environment, using the Engine allowed us to manage our own VM specs (2 vCPUs, 4 GB RAM) and persistent disks directly, which was more suitable for our current project scale and infrastructure requirements.
 
 ## Deployment
 
@@ -478,7 +516,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 23 fill here ---
+We did manage to write an API for our model. We used FastAPI to do this. We did this by creating an API application in `api.py` that loads our trained Vision Transformer model from a checkpoint at startup using a lifespan context manager. The API provides two prediction endpoints: one that accepts a local file path and another that accepts file uploads via multipart form data, which is more suitable for frontend integration.
+
+We also added several features to the API to make it more robust and user friendly. We included CORS middleware to allow frontend requests from different origins, health check and root endpoints for monitoring, and comprehensive error handling with detailed error messages. The API supports configurable top k predictions, allowing users to request the top 1 to 10 most likely food classes. We also added a classes endpoint that returns all available food categories. The model is loaded once at startup and reused for all requests, which makes inference fast and efficient. All endpoints use Pydantic models for request and response validation, ensuring type safety and automatic API documentation generation.
 
 ### Question 24
 
@@ -494,7 +534,9 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 >
 > Answer:
 
---- question 24 fill here ---
+For deployment we wrapped our model into an application using FastAPI and uvicorn. We first tried locally serving the model, which worked successfully. To run the API locally, we use: `python -m src.mlopsproj.api` or `uvicorn src.mlopsproj.api:app --host 0.0.0.0 --port 8000`. The API runs on localhost port 8000 and loads the model from a checkpoint at startup.
+
+To invoke the service, a user can make requests to the API endpoints. For example, to predict from an uploaded image file, one would call: `curl -X POST -F "file=@image.jpg" -F "top_k=5" http://localhost:8000/predict/upload`. The API returns a JSON response with the top k predictions, their confidence scores, and the top prediction. We also created a Streamlit frontend that connects to this local API, allowing users to upload images through a web interface and see predictions visually. The frontend communicates with the API running on localhost:8000, making it easy to test and demonstrate the model without needing cloud deployment.
 
 ### Question 25
 
@@ -545,6 +587,8 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > Answer:
 
 --- question 27 fill here ---
+Lier was the cloud man, since our training data was light and we got a good result, we only spent 27.8dkk
+
 
 ### Question 28
 
@@ -592,6 +636,7 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > Answer:
 
 --- question 30 fill here ---
+hydra dagshub , gcloud, vertex especially, google cloud exercise not being updated
 
 ### Question 31
 
@@ -608,5 +653,7 @@ Even if we had 100 percent code coverage, we would not trust the code to be comp
 > *All members contributed to code by...*
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
 > Answer:
+
+All group members contributed equaly on all parts, since it was done togheter, which might not be the fastest way, but the best way for learning the grand scope
 
 --- question 31 fill here ---
