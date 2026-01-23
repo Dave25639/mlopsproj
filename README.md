@@ -47,20 +47,20 @@
 - [x] Create a workflow to automatically build Docker images (M21)
 - [x] Run model training on GCP (Engine or Vertex AI) (M21)
 - [x] Create a **FastAPI** application for model inference (M22)
-- [x] Deploy the model using **GCP Functions** or **Cloud Run** (M23)
+- [ ] Deploy the model using **GCP Functions** or **Cloud Run** (M23)
 - [x] Write API tests and integrate them into CI (M24)
 - [x] Load test the deployed application (M24)
-- [x] Create a specialized ML deployment API using **ONNX**, **BentoML**, or both (M25)
+- [ ] Create a specialized ML deployment API using **ONNX**, **BentoML**, or both (M25)
 - [x] Create a frontend for the API (M26)
 
 ---
 
 ## Week 3
 
-- [ ] Evaluate robustness to data drift (M27)
-- [ ] Collect input-output data from the deployed application (M27)
+- [x] Evaluate robustness to data drift (M27)
+- [x] Collect input-output data from the deployed application (M27)
 - [ ] Deploy a drift detection API to the cloud (M27)
-- [ ] Instrument the API with system metrics (M28)
+- [x] Instrument the API with system metrics (M28)
 - [ ] Set up cloud monitoring for the instrumented application (M28)
 - [ ] Create alerting systems in GCP for incorrect behavior (M28)
 - [ ] Optimize data loading using distributed data loading (if applicable) (M29)
@@ -71,12 +71,12 @@
 
 ## Extra
 
-- [ ] Write documentation for the application (M32)
+- [x] Write documentation for the application (M32)
 - [ ] Publish documentation using **GitHub Pages** (M32)
-- [ ] Revisit the initial project description — did it turn out as expected?
-- [ ] Create an architectural diagram of the MLOps pipeline
-- [ ] Ensure all group members understand all parts of the project
-- [ ] Upload all code to GitHub
+- [x] Revisit the initial project description — did it turn out as expected?
+- [x] Create an architectural diagram of the MLOps pipeline
+- [x] Ensure all group members understand all parts of the project
+- [x] Upload all code to GitHub
 
 ````markdown
 # mlopsproj
