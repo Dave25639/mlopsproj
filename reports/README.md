@@ -97,10 +97,10 @@ will check the repositories and the code to verify your answers.
 
 ### Week 3
 
-* [ ] Check how robust your model is towards data drifting (M27)
-* [ ] Setup collection of input-output data from your deployed application (M27)
+* [x] Check how robust your model is towards data drifting (M27)
+* [x] Setup collection of input-output data from your deployed application (M27)
 * [ ] Deploy to the cloud a drift detection API (M27)
-* [ ] Instrument your API with a couple of system metrics (M28)
+* [x] Instrument your API with a couple of system metrics (M28)
 * [ ] Setup cloud monitoring of your instrumented application (M28)
 * [ ] Create one or more alert systems in GCP to alert you if your app is not behaving correctly (M28)
 * [ ] If applicable, optimize the performance of your data loading using distributed data loading (M29)
@@ -548,6 +548,8 @@ For deployment we wrapped our model into an application using FastAPI and uvicor
 
 To invoke the service, a user can make requests to the API endpoints. For example, to predict from an uploaded image file, one would call: `curl -X POST -F "file=@image.jpg" -F "top_k=5" http://localhost:8000/predict/upload`. The API returns a JSON response with the top k predictions, their confidence scores, and the top prediction. We also created a Streamlit frontend that connects to this local API, allowing users to upload images through a web interface and see predictions visually. The frontend communicates with the API running on localhost:8000, making it easy to test and demonstrate the model without needing cloud deployment.
 
+![Streamlit Frontend UI](figures/ui.png)
+
 ### Question 25
 
 > **Did you perform any functional testing and load testing of your API? If yes, explain how you did it and what**
@@ -581,7 +583,9 @@ For load testing, we created a custom load testing script in `tests/load_test_ap
 > Answer:
 
 --- question 26 fill here ---
-We did not manage to implement comprehensive monitoring of our deployed model. We would like to have monitoring implemented such that over time we could measure key metrics like request latency, error rates, prediction confidence distributions, and system resource usage (CPU, memory, disk). This would inform us about the performance and behavior of our application in production. Monitoring would help us detect issues early, such as model performance degradation, increased error rates, or system resource constraints. It would also enable us to track data drift by monitoring the distribution of input features over time and alert us if the incoming data starts to differ significantly from the training data, which could indicate that the model needs retraining.
+We did manage to implement monitoring and data collection for our deployed model. We created a metrics system (`metrics.py`) that tracks key performance indicators including request counts (total, successful, failed), latency statistics (average, min, max), prediction confidence distributions, and error counts by type. These metrics are exposed via a `/metrics` endpoint that returns real-time statistics in JSON format.
+
+Additionally, we implemented data collection (`data_collection.py`) that logs all API predictions to JSONL files. Each log entry includes the timestamp, image hash or path, predictions with confidence scores, request latency, and any errors. The logs are automatically rotated daily and can be queried via the `/predictions/recent` endpoint. This data collection enables us to analyze prediction patterns over time, detect data drift by comparing incoming data distributions, and identify when model performance might be degrading. The logged data can also be used for retraining the model with production data. While we haven't set up cloud-based monitoring dashboards or alerting systems yet, the foundation is in place to track the application's behavior and performance over time.
 
 ## Overall discussion of project
 
@@ -620,6 +624,8 @@ Since our training data was relatively light and we achieved good results effici
 
 --- question 28 fill here ---
 We implemented integration with DAGsHub for experiment tracking and model versioning. DAGsHub provided us with a unified platform for managing our ML experiments, tracking metrics, and versioning our models alongside our code. This integration helped us maintain better organization of our experiments and made it easier to compare different model versions and their performance metrics.
+
+Additionally, we implemented a comprehensive data collection and metrics system for our API. We created a prediction logger (`data_collection.py`) that automatically logs all API predictions to JSONL files, including image hashes, predictions, confidence scores, latency, and errors. This enables us to analyze prediction patterns over time and use production data for future model improvements. We also built a metrics system (`metrics.py`) that tracks request counts, latency statistics, prediction confidence distributions, and error rates. These metrics are exposed via a `/metrics` endpoint for real-time monitoring. We also added a `/predictions/recent` endpoint to query recent logged predictions. This monitoring infrastructure helps us track the health and performance of our deployed model, detect issues early, and make data-driven decisions about when to retrain or update the model.
 
 ### Question 29
 

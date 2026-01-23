@@ -5,6 +5,8 @@ FastAPI application for food image classification using trained ViT model.
 import io
 import logging
 import os
+import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator, List, Optional
@@ -16,6 +18,8 @@ from PIL import Image
 from pydantic import BaseModel
 from torchvision import transforms
 
+from mlopsproj.data_collection import get_prediction_logger
+from mlopsproj.metrics import get_metrics
 from mlopsproj.model import ViTClassifier
 
 logger = logging.getLogger(__name__)
@@ -285,6 +289,11 @@ async def predict(request: PredictionRequest):
     Returns:
         PredictionResponse with top-k predictions
     """
+    request_id = str(uuid.uuid4())
+    start_time = time.time()
+    metrics = get_metrics()
+    prediction_logger = get_prediction_logger()
+
     try:
         # Load image from local path
         logger.info(f"Loading image from path: {request.image_path}")
@@ -303,17 +312,64 @@ async def predict(request: PredictionRequest):
             top_confidence=predictions[0].confidence,
         )
 
+        # Calculate latency
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Record metrics
+        metrics.record_request(
+            endpoint="/predict",
+            success=True,
+            latency_ms=latency_ms,
+            confidence=response.top_confidence,
+        )
+
+        # Log prediction data
+        prediction_logger.log_prediction(
+            image_path=request.image_path,
+            predictions=[{"class_name": p.class_name, "confidence": p.confidence, "rank": p.rank} for p in predictions],
+            top_prediction=response.top_prediction,
+            top_confidence=response.top_confidence,
+            request_id=request_id,
+            latency_ms=latency_ms,
+        )
+
         logger.info(
             f"Prediction completed: {response.top_prediction} "
-            f"(confidence: {response.top_confidence:.4f})"
+            f"(confidence: {response.top_confidence:.4f}, latency: {latency_ms:.2f}ms)"
         )
 
         return response
 
-    except HTTPException:
+    except HTTPException as e:
+        latency_ms = (time.time() - start_time) * 1000
+        metrics.record_request(
+            endpoint="/predict",
+            success=False,
+            latency_ms=latency_ms,
+            error=str(e.detail),
+        )
+        prediction_logger.log_prediction(
+            image_path=request.image_path,
+            error=str(e.detail),
+            request_id=request_id,
+            latency_ms=latency_ms,
+        )
         raise
     except Exception as e:
+        latency_ms = (time.time() - start_time) * 1000
         logger.error(f"Prediction failed: {e}", exc_info=True)
+        metrics.record_request(
+            endpoint="/predict",
+            success=False,
+            latency_ms=latency_ms,
+            error=str(e),
+        )
+        prediction_logger.log_prediction(
+            image_path=request.image_path,
+            error=str(e),
+            request_id=request_id,
+            latency_ms=latency_ms,
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Prediction failed: {str(e)}"
@@ -338,6 +394,12 @@ async def predict_upload(
     Returns:
         PredictionResponse with top-k predictions
     """
+    request_id = str(uuid.uuid4())
+    start_time = time.time()
+    metrics = get_metrics()
+    prediction_logger = get_prediction_logger()
+    image_bytes = None
+
     try:
         # Validate file type
         if not file.content_type or not file.content_type.startswith("image/"):
@@ -366,17 +428,66 @@ async def predict_upload(
             top_confidence=predictions[0].confidence,
         )
 
+        # Calculate latency
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Record metrics
+        metrics.record_request(
+            endpoint="/predict/upload",
+            success=True,
+            latency_ms=latency_ms,
+            confidence=response.top_confidence,
+        )
+
+        # Log prediction data
+        prediction_logger.log_prediction(
+            image_bytes=image_bytes,
+            predictions=[{"class_name": p.class_name, "confidence": p.confidence, "rank": p.rank} for p in predictions],
+            top_prediction=response.top_prediction,
+            top_confidence=response.top_confidence,
+            request_id=request_id,
+            latency_ms=latency_ms,
+        )
+
         logger.info(
             f"Prediction completed: {response.top_prediction} "
-            f"(confidence: {response.top_confidence:.4f})"
+            f"(confidence: {response.top_confidence:.4f}, latency: {latency_ms:.2f}ms)"
         )
 
         return response
 
-    except HTTPException:
+    except HTTPException as e:
+        latency_ms = (time.time() - start_time) * 1000
+        metrics.record_request(
+            endpoint="/predict/upload",
+            success=False,
+            latency_ms=latency_ms,
+            error=str(e.detail),
+        )
+        if image_bytes:
+            prediction_logger.log_prediction(
+                image_bytes=image_bytes,
+                error=str(e.detail),
+                request_id=request_id,
+                latency_ms=latency_ms,
+            )
         raise
     except Exception as e:
+        latency_ms = (time.time() - start_time) * 1000
         logger.error(f"Prediction failed: {e}", exc_info=True)
+        metrics.record_request(
+            endpoint="/predict/upload",
+            success=False,
+            latency_ms=latency_ms,
+            error=str(e),
+        )
+        if image_bytes:
+            prediction_logger.log_prediction(
+                image_bytes=image_bytes,
+                error=str(e),
+                request_id=request_id,
+                latency_ms=latency_ms,
+            )
         raise HTTPException(
             status_code=500,
             detail=f"Prediction failed: {str(e)}"
@@ -389,6 +500,41 @@ async def get_classes():
     return {
         "classes": class_names,
         "num_classes": len(class_names),
+    }
+
+
+@app.get("/metrics")
+async def get_metrics_endpoint():
+    """
+    Get system metrics for monitoring.
+
+    Returns metrics including:
+    - Request counts (total, successful, failed)
+    - Latency statistics (average, min, max)
+    - Prediction statistics (count, confidence)
+    - Error counts
+    - Endpoint usage
+    """
+    metrics = get_metrics()
+    return metrics.to_dict()
+
+
+@app.get("/predictions/recent")
+async def get_recent_predictions(limit: int = 100):
+    """
+    Get recent predictions from the data collection log.
+
+    Args:
+        limit: Maximum number of predictions to return (default: 100)
+
+    Returns:
+        List of recent prediction entries
+    """
+    prediction_logger = get_prediction_logger()
+    predictions = prediction_logger.get_recent_predictions(limit=limit)
+    return {
+        "count": len(predictions),
+        "predictions": predictions,
     }
 
 
