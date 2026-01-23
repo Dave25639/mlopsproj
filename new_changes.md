@@ -36,7 +36,7 @@ yamlarchitecture:
   freeze: true              # ❌ Wrong key name
   warmup_steps: 1          # ❌ Too low
   max_steps: 1             # ❌ Too low
-  
+
 checkpointing:
   dirpath: ""              # ❌ Empty
 To:
@@ -44,7 +44,7 @@ yamlarchitecture:
   freeze_backbone: true    # ✅ Matches code expectation
   warmup_steps: 500        # ✅ Reasonable value
   max_steps: null          # ✅ Calculated automatically
-  
+
 checkpointing:
   dirpath: "checkpoints"   # ✅ Valid path
 Train Config
