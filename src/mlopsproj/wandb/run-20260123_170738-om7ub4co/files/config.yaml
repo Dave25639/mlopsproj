@@ -1,0 +1,81 @@
+_wandb:
+    value:
+        cli_version: 0.24.0
+        e:
+            y0eizh5hoxxuaqi0e0lkovnq3cbu4ir2:
+                codePath: src/mlopsproj/evaluate.py
+                codePathLocal: evaluate.py
+                cpu_count: 8
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "62671097856"
+                        used: "8421965824"
+                email: nicolai.ege.leivestad@gmail.com
+                executable: /workspaces/mlopsproj/.venv/bin/python3
+                git:
+                    commit: 296988674e9cd123cfa8a2e6f2019283a9f14139
+                    remote: https://github.com/Dave25639/mlopsproj.git
+                host: 2eba5d7a7174
+                memory:
+                    total: "8217731072"
+                os: Linux-6.12.54-linuxkit-aarch64-with-glibc2.31
+                program: /workspaces/mlopsproj/src/mlopsproj/evaluate.py
+                python: CPython 3.12.11
+                root: /workspaces/mlopsproj/src/mlopsproj
+                startedAt: "2026-01-23T17:07:38.128554Z"
+                writerId: y0eizh5hoxxuaqi0e0lkovnq3cbu4ir2
+        m: []
+        python_version: 3.12.11
+        t:
+            "1":
+                - 105
+            "2":
+                - 105
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+                - 61
+                - 62
+            "4": 3.12.11
+            "5": 0.24.0
+            "12": 0.24.0
+            "13": linux-aarch64
+accumulate_grad_batches:
+    value: true
+batch_size:
+    value: 4
+data_augmentation:
+    value: false
+data_dir:
+    value: data
+data_fraction:
+    value: 1
+dropout:
+    value: 0.1
+early_stopping_patience:
+    value: 3
+freeze_backbone:
+    value: true
+learning_rate:
+    value: 0.003
+max_epochs:
+    value: 1
+model_name:
+    value: google/vit-base-patch16-224-in21k
+num_workers:
+    value: 0
+profiler:
+    value: simple
+run_test:
+    value: true
+seed:
+    value: 42
+val_fraction:
+    value: 0.1
+warmup_steps:
+    value: 500
+weight_decay:
+    value: 0.001

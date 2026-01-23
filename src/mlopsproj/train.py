@@ -313,7 +313,7 @@ def main(cfg: DictConfig):
                     "weight_decay": cfg.model.architecture.weight_decay,
                     "model_name": cfg.model.architecture.model_name,
                     "data_fraction": cfg.data.data_fraction,
-                    "freeze_backbone": cfg.model.freeze,
+                    "freeze_backbone": cfg.model.architecture.freeze_backbone,
                     "max_epochs": cfg.train.max_epochs,
                     "warmup_steps": cfg.model.architecture.warmup_steps,
                     "dropout": cfg.model.architecture.dropout,

@@ -45,13 +45,13 @@
 - [ ] Add a workflow that triggers when the model registry changes (M19)
 - [x] Create a GCP Bucket for data storage and link it to data version control (M21)
 - [x] Create a workflow to automatically build Docker images (M21)
-- [ ] Run model training on GCP (Engine or Vertex AI) (M21)
+- [x] Run model training on GCP (Engine or Vertex AI) (M21)
 - [x] Create a **FastAPI** application for model inference (M22)
-- [ ] Deploy the model using **GCP Functions** or **Cloud Run** (M23)
-- [ ] Write API tests and integrate them into CI (M24)
-- [ ] Load test the deployed application (M24)
-- [ ] Create a specialized ML deployment API using **ONNX**, **BentoML**, or both (M25)
-- [ ] Create a frontend for the API (M26)
+- [x] Deploy the model using **GCP Functions** or **Cloud Run** (M23)
+- [x] Write API tests and integrate them into CI (M24)
+- [x] Load test the deployed application (M24)
+- [x] Create a specialized ML deployment API using **ONNX**, **BentoML**, or both (M25)
+- [x] Create a frontend for the API (M26)
 
 ---
 
