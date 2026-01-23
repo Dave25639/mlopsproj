@@ -4,16 +4,20 @@
     args:
       - 'build'
       - '-f'
-      - 'dockerfiles/train.dockerfile'  # ← lowercase 'dockerfile' extension!
+      - 'train.dockerfile'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
+      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:latest'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260122-2030'
       - '.'
 
   # Push to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
+      - '--all-tags'
+      - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train'
 
 images:
-  - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260121-2323'
+  - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:latest'
+  - 'europe-west1-docker.pkg.dev/dtumlops-485016/my-container-repo/mlops-train:build-20260122-2030'

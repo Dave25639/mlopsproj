@@ -1,36 +1,33 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-ENV DVC_REMOTE=gcpstore
-ENV PYTHONPATH=/app/src
+RUN apt-get update && apt-get install -y build-essential gcc git
 
 WORKDIR /app
 
-COPY uv.lock uv.lock
-COPY pyproject.toml pyproject.toml
+# 1. Copy project files
+COPY pyproject.toml uv.lock README.md ./
+COPY src/ ./src/
+COPY configs/ ./configs/
 
+# 2. Sync dependencies (ensure dvc[s3] is in your pyproject.toml)
 RUN uv sync --frozen --no-install-project
 
-COPY .dvc .dvc/
-COPY src src/
-COPY README.md README.md
-COPY LICENSE LICENSE
+# 3. Setup DVC (Crucial Changes Here)
+# DO NOT run 'dvc init' - it overwrites your config.
+# Instead, copy your existing .dvc folder structure
+COPY .dvc/config .dvc/config
+COPY data/*.dvc ./data/
 
-RUN uv sync --frozen
-COPY configs configs/
+# 4. Handle Credentials
+# Since config.local is usually gitignored, we set credentials via Build Args
+RUN uv run dvc remote modify origin --local access_key_id f05217b3ffc457f5a681247e72f533482e108658
 
-# Create a simple entrypoint (easier syntax)
-RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'echo "Container starting..."' >> /entrypoint.sh && \
-    echo 'if [ "$DVC_REMOTE" = "gcpstore" ]; then' >> /entrypoint.sh && \
-    echo '  echo "Using GCP remote for data"' >> /entrypoint.sh && \
-    echo '  dvc pull --remote gcpstore 2>/dev/null || true' >> /entrypoint.sh && \
-    echo 'else' >> /entrypoint.sh && \
-    echo '  echo "Using DagsHub remote for data"' >> /entrypoint.sh && \
-    echo '  dvc pull --remote origin 2>/dev/null || true' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'exec "$@"' >> /entrypoint.sh
+RUN uv run dvc remote modify origin --local secret_access_key f05217b3ffc457f5a681247e72f533482e108658
 
-RUN chmod +x /entrypoint.sh
+RUN uv run dvc config core.no_scm true
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uv", "run", "python", "-m", "mlopsproj.train"]
+# 5. Pull and Organize
+RUN uv run dvc pull
+RUN uv run python src/mlopsproj/organize_data_script.py
+
+ENTRYPOINT ["uv", "run", "python", "-m", "src.mlopsproj.train"]
