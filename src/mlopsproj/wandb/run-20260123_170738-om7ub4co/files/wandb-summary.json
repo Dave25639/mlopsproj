@@ -1,0 +1,1 @@
+{"total_steps":844,"test_loss":0.1587,"train/loss_epoch":0.461,"test/acc":0.9472,"best_val_acc":0.9307,"best_val_loss":0.229,"_timestamp":1.769188059698982e+09,"test/acc_top5":1,"val/acc":0.9307,"val/acc_top5":1,"_runtime":0.515154126,"test/loss":0.1587,"total_epochs":1,"test_acc":0.9472,"val/loss":0.229,"_step":844,"epoch":0,"_wandb":{"runtime":0}}

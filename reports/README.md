@@ -91,7 +91,7 @@ will check the repositories and the code to verify your answers.
 * [x] Create a FastAPI application that can do inference using your model (M22)
 * [ ] Deploy your model in GCP using either Functions or Run as the backend (M23)
 * [x] Write API tests for your application and setup continues integration for these (M24)
-* [ ] Load test your application (M24)
+* [x] Load test your application (M24)
 * [ ] Create a more specialized ML-deployment API using either ONNX or BentoML, or both (M25)
 * [x] Create a frontend for your API (M26)
 
@@ -121,11 +121,11 @@ will check the repositories and the code to verify your answers.
 ### Question 1
 > **Enter the group number you signed up on <learn.inside.dtu.dk>**
 >
-> Answer:  group 121
+> Answer:
 >
-
 --- question 1 fill here ---
 group 121
+
 ### Question 2
 > **Enter the study number for each member in the group**
 >
@@ -137,6 +137,7 @@ group 121
 
 --- question 2 fill here ---
 s214421, s243219, s253525, s215167
+
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
 > **which did you use and how did they help you complete the project?**
@@ -203,7 +204,6 @@ The `uv sync` command reads both `pyproject.toml` and `uv.lock` to install all d
 > Answer:
 
 --- question 5 fill here ---
-
 From the cookiecutter template we filled out the core modules in `src/mlopsproj/`: `data.py` for loading and preprocessing the Food-101 dataset, `model.py` for our Vision Transformer implementation, `train.py` for the training pipeline with PyTorch Lightning, `api.py` for the FastAPI inference service, `evaluate.py` for model evaluation, and `visualize.py` for visualization utilities. We also filled out the `configs/` folder with Hydra configuration files for data, model, training, and logging.
 
 We added several files that weren't in the template: `callbacks.py` for custom PyTorch Lightning callbacks (like logging predictions to W&B), `frontend.py` for our Streamlit frontend, `organize_data_script.py` for organizing the dataset, and a `scripts/` subfolder with data processing utilities. We also added `sweep.py` and `sweep_config.yaml` for running hyperparameter sweeps with W&B, and `cloudbuild.yaml` for GCP Cloud Build automation. Additionally, we created `cheatsheet.md` as a quick reference for common commands. The overall structure from the template was maintained, we just extended it with project-specific functionality.
@@ -228,7 +228,7 @@ These concepts are important in larger projects because when multiple people wor
 ## Version control
 
 > In the following section we are interested in how version control was used in your project during development to
-> corporate and increase the quality of your code.
+> collaborate and increase the quality of your code.
 
 ### Question 7
 
@@ -373,8 +373,15 @@ As seen in the second image we are also tracking hyperparameters such as learnin
 
 The metrics we track are important because loss values help us monitor training progress and detect issues like vanishing gradients or overfitting early. Accuracy metrics give us the actual performance we care about for the classification task. Hyperparameter logging enables us to run multiple experiments and systematically identify the best configuration. Without this tracking, it would be impossible to compare experiments or reproduce successful runs.
 
-![W&B Training Metrics](figures/wandb_metrics.png)
-![W&B Hyperparameters](figures/wandb_hyperparameters.png)
+![W&B Training Metrics](figures/wandb6.png)
+![W&B Training Metrics](figures/wandb5.png)
+![W&B Training Metrics](figures/wandb4.png)
+![W&B Training Metrics](figures/wandb3.png)
+![W&B Training Metrics](figures/wandb2.png)
+![W&B Training Metrics](figures/wandb1.png)
+![W&B Hyperparameters](figures/wandbhyper.png)
+
+
 
 ### Question 15
 
@@ -430,7 +437,7 @@ We did profiling runs of our training code using PyTorch Lightning's SimpleProfi
 > Answer:
 
 --- question 17 fill here ---
-Our project currently utilizes two primary services for cloud-based model training: Virtual Machine (VM) instances for computation and an Artifact Registry for Docker image management. While we also leverage Google Cloud Storage (GCS) buckets to store raw image data and DVC files, these storage components remain separate from the active cloud training execution environment.
+Our project utilizes several GCP services: Compute Engine for running VM instances that execute our model training, Artifact Registry for storing and managing our Docker images, Cloud Storage (GCS) buckets for storing raw image data and DVC files, and Cloud Build for automatically building Docker images when code is pushed to the repository. Compute Engine provides the computational resources needed for training, Artifact Registry ensures our Docker images are versioned and easily accessible, Cloud Storage serves as our data repository, and Cloud Build automates the image building process.
 
 
 ### Question 18
@@ -449,7 +456,6 @@ Our project currently utilizes two primary services for cloud-based model traini
 --- question 18 fill here ---
 The backbone of our GCP infrastructure is Compute Engine, which provides the necessary computational resources for our model training. We provisioned a specific VM instance named "mlops" located in the europe-west1-d zone.
 
-
 Regarding hardware, we utilized the e2-medium machine type. This general-purpose instance features an Intel Broadwell CPU platform and a 10 GB persistent boot disk running Debian 12 Bookworm.
 
 To ensure a portable and consistent environment, we start the training process using a custom Docker container. Our workflow involves building images via Cloud Build and storing them in the Artifact Registry. Specifically, we execute our training by pulling the mlops-train:latest image from our repository and running it directly on the VM.
@@ -462,6 +468,7 @@ To ensure a portable and consistent environment, we start the training process u
 > Answer:
 
 --- question 19 fill here ---
+![GCP Bucket Contents](figures/bucket.jpeg)
 
 ### Question 20
 
@@ -471,6 +478,8 @@ To ensure a portable and consistent environment, we start the training process u
 > Answer:
 
 --- question 20 fill here ---
+![GCP Artifact Registry](figures/Registery.jpeg)
+![Docker Image](figures/dockerimage.jpeg)
 
 ### Question 21
 
@@ -480,6 +489,7 @@ To ensure a portable and consistent environment, we start the training process u
 > Answer:
 
 --- question 21 fill here ---
+![GCP Cloud Build History](figures/cloud bill history.jpeg)
 
 ### Question 22
 
@@ -553,6 +563,9 @@ To invoke the service, a user can make requests to the API endpoints. For exampl
 > Answer:
 
 --- question 25 fill here ---
+We implemented both functional testing and load testing for our API. For functional testing, we used pytest with FastAPI's TestClient to test our API endpoints. Our test suite in `tests/test_api.py` covers health checks, root endpoint, classes endpoint, prediction endpoints with file uploads, error handling for invalid files, and validation of the top_k parameter. The tests use mocked models to ensure fast execution without requiring a full model load.
+
+For load testing, we created a custom load testing script in `tests/load_test_api.py` using pytest-asyncio and httpx. The script can be run both as a standalone tool (with command-line arguments for URL, number of users, and requests per user) and as pytest test functions. Our load tests simulate multiple concurrent users making requests to the API and measure key metrics including request latency (average, min, max), success rate, and requests per second. The tests automatically skip if the API is not running, making them safe to include in CI/CD pipelines. We can run lightweight tests (2 users, 2 requests each) for quick validation, or heavier load tests (10 users, 10 requests each) marked with the "slow" marker that can be skipped with `-m "not slow"`. This load testing helps us understand the API's capacity, identify bottlenecks, and ensure it can handle production traffic.
 
 ### Question 26
 
@@ -568,6 +581,7 @@ To invoke the service, a user can make requests to the API endpoints. For exampl
 > Answer:
 
 --- question 26 fill here ---
+We did not manage to implement comprehensive monitoring of our deployed model. We would like to have monitoring implemented such that over time we could measure key metrics like request latency, error rates, prediction confidence distributions, and system resource usage (CPU, memory, disk). This would inform us about the performance and behavior of our application in production. Monitoring would help us detect issues early, such as model performance degradation, increased error rates, or system resource constraints. It would also enable us to track data drift by monitoring the distribution of input features over time and alert us if the incoming data starts to differ significantly from the training data, which could indicate that the model needs retraining.
 
 ## Overall discussion of project
 
@@ -587,7 +601,7 @@ To invoke the service, a user can make requests to the API endpoints. For exampl
 > Answer:
 
 --- question 27 fill here ---
-Lier was the cloud man, since our training data was light and we got a good result, we only spent 27.8dkk
+Since our training data was relatively light and we achieved good results efficiently, we only spent 27.8 DKK in total during the project. The primary cost came from Compute Engine VM instances used for model training. Working in the cloud was beneficial for our project as it allowed us to access more computational resources than we had locally, enabled easy collaboration through shared infrastructure, and provided a consistent environment for training and deployment. The cloud infrastructure also made it straightforward to scale up if needed, though we found that our current setup was sufficient for our project requirements.
 
 
 ### Question 28
@@ -605,6 +619,7 @@ Lier was the cloud man, since our training data was light and we got a good resu
 > Answer:
 
 --- question 28 fill here ---
+We implemented integration with DAGsHub for experiment tracking and model versioning. DAGsHub provided us with a unified platform for managing our ML experiments, tracking metrics, and versioning our models alongside our code. This integration helped us maintain better organization of our experiments and made it easier to compare different model versions and their performance metrics.
 
 ### Question 29
 
@@ -622,6 +637,19 @@ Lier was the cloud man, since our training data was light and we got a good resu
 > Answer:
 
 --- question 29 fill here ---
+![System Architecture](figures/diagram.jpeg)
+
+The diagram starts with our local development workflow. On our laptops, we use W&B for experiment tracking, Hydra for configuration management, and TensorBoard for visualizing training progress. This development code flows into our dev environment where we test things locally before pushing to version control.
+
+When we're ready, we commit our code and push it to GitHub. Before the code actually gets pushed, pre-commit hooks run automatically to check code quality. Once the code is on GitHub, GitHub Actions kicks in to run our CI pipeline - things like unit tests and linting checks.
+
+For data management, we use DVC (Data Version Control) integrated with DAGsHub. The actual data files live in cloud storage, but DVC tracks which versions we're using through small metadata files in git. This keeps our repository lightweight while still versioning our datasets.
+
+When we push code to GitHub, it triggers a GCP Cloud Build workflow. This builds our Docker images and pushes them to Google's Container Registry. The Docker containers are set up to pull data via DVC when they run, so they automatically fetch the right dataset version from our remote storage.
+
+The built Docker images get deployed to a Compute Engine VM instance in Google Cloud. The VM runs the containerized application, which could be our training pipeline or our inference API. For serving predictions, we expose a FastAPI frontend that users can query.
+
+Users interact with the system in a few ways: they can clone the repository from GitHub to run things locally, pull the latest Docker image directly to run it themselves, or simply query the deployed API frontend to get predictions without worrying about the infrastructure underneath.
 
 ### Question 30
 
@@ -636,7 +664,9 @@ Lier was the cloud man, since our training data was light and we got a good resu
 > Answer:
 
 --- question 30 fill here ---
-hydra dagshub , gcloud, vertex especially, google cloud exercise not being updated
+The biggest challenges in the project were related to learning and integrating various cloud and MLOps tools. Hydra configuration management required time to understand the composition patterns and how to properly structure config files. DAGsHub integration took effort to set up correctly with our existing workflow. Google Cloud Platform tools, especially gcloud CLI and Vertex AI, were challenging because the documentation and exercises were not always up to date, requiring us to troubleshoot and adapt to the current API versions.
+
+We overcame these challenges by spending time reading documentation, experimenting with small examples, and helping each other debug issues. We also used online resources and community forums when official documentation was unclear. For GCP specifically, we focused on Compute Engine first (which was more straightforward) before attempting Vertex AI, which helped us build understanding incrementally. The collaborative approach of working together on all parts of the project, while slower, ensured that everyone understood the challenges and solutions, making the learning process more effective.
 
 ### Question 31
 
@@ -654,6 +684,7 @@ hydra dagshub , gcloud, vertex especially, google cloud exercise not being updat
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
 > Answer:
 
-All group members contributed equaly on all parts, since it was done togheter, which might not be the fastest way, but the best way for learning the grand scope
-
 --- question 31 fill here ---
+All group members contributed equally on all parts of the project, since it was done together. This collaborative approach might not have been the fastest way to complete tasks, but it was the best way for learning the grand scope of the MLOps pipeline. Each member worked on data processing, model development, training, API creation, cloud deployment, and testing, ensuring everyone gained comprehensive understanding of the entire system.
+
+We have used ChatGPT and other generative AI tools to help debug code, understand error messages, and get explanations of complex concepts. Additionally, we used GitHub Copilot to help write boilerplate code and suggest implementations for common patterns. These tools were particularly helpful when working with unfamiliar libraries or when stuck on specific technical issues.

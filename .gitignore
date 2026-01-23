@@ -172,6 +172,9 @@ cython_debug/
 ## logging-train output
 outputs/
 
+## Large report figures (exceed 500 KB limit)
+# Note: wandbhyper.png has been compressed to stay under 500 KB limit
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

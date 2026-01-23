@@ -1,0 +1,28 @@
+{
+  "os":  "Linux-6.12.54-linuxkit-aarch64-with-glibc2.31",
+  "python":  "CPython 3.12.11",
+  "startedAt":  "2026-01-23T17:07:38.128554Z",
+  "program":  "/workspaces/mlopsproj/src/mlopsproj/evaluate.py",
+  "codePath":  "src/mlopsproj/evaluate.py",
+  "codePathLocal":  "evaluate.py",
+  "git":  {
+    "remote":  "https://github.com/Dave25639/mlopsproj.git",
+    "commit":  "296988674e9cd123cfa8a2e6f2019283a9f14139"
+  },
+  "email":  "nicolai.ege.leivestad@gmail.com",
+  "root":  "/workspaces/mlopsproj/src/mlopsproj",
+  "host":  "2eba5d7a7174",
+  "executable":  "/workspaces/mlopsproj/.venv/bin/python3",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "62671097856",
+      "used":  "8421965824"
+    }
+  },
+  "memory":  {
+    "total":  "8217731072"
+  },
+  "writerId":  "y0eizh5hoxxuaqi0e0lkovnq3cbu4ir2"
+}
