@@ -7,13 +7,15 @@ from typing import List, Optional, Sequence, Tuple
 import pytorch_lightning as L
 import torch
 from PIL import Image
+import typer
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 
 logger = logging.getLogger(__name__)
-
+app = typer.Typer()
 
 # ---------------------------
 # Custom Dataset wrapper
@@ -39,7 +41,7 @@ class FoodDataset(Dataset):
 
 
 # ---------------------------
-# Paths
+# Utils
 # ---------------------------
 
 @dataclass(frozen=True)
@@ -58,15 +60,16 @@ class DataPaths:
     def test_dir(self) -> Path:
         return self.images_root / "test"
 
-
-# ---------------------------
-# Transforms
-# ---------------------------
+def show_image_and_target(img, target, class_names):
+    img = img * 0.5 + 0.5
+    plt.imshow(img.permute(1, 2, 0).numpy().clip(0, 1))
+    plt.title(class_names[target])
+    plt.axis('off')
 
 def build_transforms(train: bool = False):
     mean = (0.5, 0.5, 0.5)
     std = (0.5, 0.5, 0.5)
-    
+
     if train:
         # Training with augmentations
         return transforms.Compose([
@@ -82,7 +85,7 @@ def build_transforms(train: bool = False):
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
-    
+
     # Validation/test without augmentations
     return transforms.Compose([
         transforms.Resize(256),                        # ADD THIS
@@ -90,6 +93,94 @@ def build_transforms(train: bool = False):
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
     ])
+
+@app.command()
+def smoke_test(datadir: str = "data/") -> None:
+    logger.info(f"Starting smoke test: {datadir}")
+
+    dm = Food101DataModule(data_dir=datadir, batch_size=8, num_workers=0, augment_train=True, val_fraction=0.2, split_seed=42)
+    dm.setup()
+
+    xb, yb = next(iter(dm.train_dataloader()))
+    # Use print for the "normal" look
+    print(f"✅ Train Load Success | Batch Shape: {xb.shape}")
+    print(f"✅ Labels: {yb.tolist()}")
+
+    print(f"Dataset Classes: {dm.classes[:5]}")
+
+@app.command()
+def dataset_statistics(datadir: str = "data/", output_dir: str = "src/mlopsproj/outputs/cml") -> None:
+    """Compute Food-101 dataset statistics and save visualizations."""
+    import logging
+    import random
+    import matplotlib.pyplot as plt
+    from pathlib import Path
+
+    logger = logging.getLogger(__name__)
+
+    # 1. Ensure output directory exists
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    logger.info(f"Computing dataset statistics for: {datadir}")
+
+    # 2. Initialize DataModule
+    dm = Food101DataModule(data_dir=datadir, batch_size=32)
+    dm.setup(stage="fit")
+    dm.setup(stage="test")
+
+    # 3. Prepare Markdown Report Content
+    report = [
+        "# FOOD-101 DATASET STATISTICS",
+        f"- **Number of classes:** {dm.num_classes}",
+        f"- **Train samples:** {len(dm.train_dataset)}",
+        f"- **Val samples:** {len(dm.val_dataset)}",
+        f"- **Test samples:** {len(dm.test_dataset)}",
+        "\n## Visualizations"
+    ]
+
+    # -----------------------
+    # Sample Images
+    # -----------------------
+    fig, axes = plt.subplots(2, 4, figsize=(12, 6))
+    axes = axes.flatten()
+
+    for i, ax in enumerate(axes):
+        img, label = dm.train_dataset[random.randint(0, len(dm.train_dataset)-1)]
+        plt.sca(ax)  # Set the current axis
+        show_image_and_target(img, label, dm.classes)
+
+    plt.tight_layout()
+    sample_img_path = out_path / "food101_sample_images.png"
+    plt.savefig(sample_img_path, dpi=150)
+    plt.close()
+
+    report.append(f"![Sample Images]({sample_img_path.name})")
+
+    # -----------------------
+    # Train Label Distribution
+    # -----------------------
+    train_labels = [label for _, label in dm.train_dataset.samples]
+    plt.figure(figsize=(12, 4))
+    plt.hist(train_labels, bins=range(dm.num_classes + 1), color='skyblue', edgecolor='black')
+    plt.xticks(range(dm.num_classes), dm.classes, rotation=90)
+    plt.xlabel("Class")
+    plt.ylabel("Number of samples")
+    plt.title("Train Label Distribution")
+    plt.tight_layout()
+    train_dist_path = out_path / "train_label_distribution.png"
+    plt.savefig(train_dist_path, dpi=150)
+    plt.close()
+
+    report.append(f"![Train Label Distribution]({train_dist_path.name})")
+
+    # -----------------------
+    # Write Markdown Report
+    # -----------------------
+    md_report_path = out_path / "data_statistics.md"
+    md_report_path.write_text("\n".join(report))
+
+    logger.info(f"✓ Statistics complete! Report saved to {md_report_path}")
 
 
 # ---------------------------
@@ -190,31 +281,4 @@ class Food101DataModule(L.LightningDataModule):
 # ---------------------------
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-
-    data_dir = "/workspaces/mlopsproj/data"
-
-    dm = Food101DataModule(
-        data_dir=data_dir,
-        batch_size=8,
-        num_workers=2,
-        val_fraction=0.1,
-        split_seed=42,
-        augment_train=True
-    )
-
-    dm.setup()
-
-    xb, yb = next(iter(dm.train_dataloader()))
-    print("Train batch:", xb.shape, yb.shape)
-
-    xb, yb = next(iter(dm.val_dataloader()))
-    print("Val batch:", xb.shape, yb.shape)
-
-    xb, yb = next(iter(dm.test_dataloader()))
-    print("Test batch:", xb.shape, yb.shape)
-
-    print("Classes:", dm.classes[:5])
+    app()

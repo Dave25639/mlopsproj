@@ -1,7 +1,13 @@
 [core]
-    remote = origin
+    remote = gcpstore
 ['remote "origin"']
     url = s3://dvc
     endpointurl = https://dagshub.com/Dave25639/mlopsproj.s3
 ['remote "gcpstore"']
     url = gs://mlopsproj-lier-20260121193608/dvcstore
+['remote "dagshub"']
+    url = s3://dvc
+    access_key_id = 7bab0a7d66c91007c3b851ad36dac81e8c407d2e
+    secret_access_key = 7bab0a7d66c91007c3b851ad36dac81e8c407d2e
+    endpointurl = https://dagshub.com/Dave25639/mlopsproj.s3
+    region = us-east-1

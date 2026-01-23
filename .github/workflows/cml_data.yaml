@@ -1,0 +1,78 @@
+name: DVC Data Report Workflow
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - '**/*.dvc'
+      - '.dvc/**'
+      - 'src/example_mlops/data.py'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '**/*.dvc'
+      - '.dvc/**'
+      - 'src/example_mlops/data.py'
+
+jobs:
+  data_report:
+    name: Generate Data Stats
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-paths: |
+            **/pyproject.toml
+            **/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # 1. Authenticate with Google Cloud
+      - name: Google Cloud Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 2. Setup DVC and Pull Data from GCS
+      - name: DVC Pull
+        run: uv run dvc pull --no-run-cache
+
+# 3. Run Analysis and Prepare Report
+      - name: Check data statistics & generate report
+        run: |
+          # 1. Create the output directory
+          mkdir -p src/outputs/cml
+
+          # 2. Run script and redirect stdout to the new path
+          # Ensure your python script saves .png files to this same directory!
+          uv run python src/mlopsproj/data.py > src/outputs/cml/data_statistics.md
+
+          # 3. Append image references using paths relative to the .md file
+          # Since the images and .md are in the same folder, use ./filename
+          echo '## Data Visualizations' >> src/outputs/cml/data_statistics.md
+          echo '### Sample Images' >> src/outputs/cml/data_statistics.md
+          echo '![](./food101_sample_images.png "Food-101 Samples")' >> src/outputs/cml/data_statistics.md
+          echo '### Label Distribution' >> src/outputs/cml/data_statistics.md
+          echo '![](./train_label_distribution.png "Train Distribution")' >> src/outputs/cml/data_statistics.md
+          echo '![](./test_label_distribution.png "Test Distribution")' >> src/outputs/cml/data_statistics.md
+
+      # 4. Use CML to post the report
+      - name: Setup CML
+        uses: iterative/setup-cml@v2
+
+      - name: Comment on PR
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Point CML to the new file location
+          cml comment create src/outputs/cml/data_statistics.md --watermark-title="Data Checker Report"
