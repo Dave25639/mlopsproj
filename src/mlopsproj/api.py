@@ -2,13 +2,16 @@
 FastAPI application for food image classification using trained ViT model.
 """
 
+import io
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import List, Optional
+from typing import AsyncGenerator, List, Optional
 
 import torch
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from pydantic import BaseModel
 from torchvision import transforms
@@ -17,17 +20,92 @@ from mlopsproj.model import ViTClassifier
 
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="Food Classification API",
-    description="API for classifying food images using Vision Transformer",
-    version="1.0.0",
-)
-
 # Global variables for model and classes
 model: Optional[ViTClassifier] = None
 class_names: List[str] = []
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    # This file is at src/mlopsproj/api.py, so go up 2 levels to get project root
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent.parent
+    return project_root
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Lifespan context manager for startup and shutdown events."""
+    # Startup
+    global model, class_names
+
+    # Get project root for resolving relative paths
+    project_root = get_project_root()
+
+    # Configuration - adjust these paths as needed
+    checkpoint_path = os.getenv(
+        "CHECKPOINT_PATH",
+        str(project_root / "outputs/checkpoints/epoch=00-val/acc=0.9307.ckpt")  # Update to your best checkpoint
+    )
+    data_dir = os.getenv("DATA_DIR", str(project_root / "data"))
+    num_classes = int(os.getenv("NUM_CLASSES", "101"))
+    model_name = os.getenv("MODEL_NAME", "google/vit-base-patch16-224-in21k")
+
+    try:
+        # Load class names
+        class_names = load_class_names(data_dir)
+        if len(class_names) != num_classes:
+            logger.warning(
+                f"Number of classes in file ({len(class_names)}) "
+                f"doesn't match num_classes ({num_classes})"
+            )
+
+        # Load model
+        # If checkpoint_path is relative, resolve it relative to project root
+        checkpoint = Path(checkpoint_path)
+        if not checkpoint.is_absolute():
+            checkpoint = project_root / checkpoint_path
+        if not checkpoint.exists():
+            raise FileNotFoundError(
+                f"Checkpoint not found at {checkpoint}. "
+                f"Please update CHECKPOINT_PATH environment variable."
+            )
+
+        model = load_model_from_checkpoint(
+            str(checkpoint),
+            num_classes=len(class_names),
+            model_name=model_name,
+        )
+
+        logger.info("API startup completed successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize API: {e}", exc_info=True)
+        raise
+
+    yield  # Application is running
+
+    # Shutdown (if needed, add cleanup code here)
+    logger.info("API shutting down")
+
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(
+    title="Food Classification API",
+    description="API for classifying food images using Vision Transformer",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# Add CORS middleware to allow frontend requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Request/Response models
@@ -118,6 +196,21 @@ def load_image_from_path(file_path: str) -> Image.Image:
         )
 
 
+def load_image_from_bytes(image_bytes: bytes) -> Image.Image:
+    """Load image from bytes (uploaded file) and return PIL Image."""
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        # Convert to RGB if needed (handles RGBA, L, etc.)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        return image
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to load image from uploaded file: {str(e)}"
+        )
+
+
 def preprocess_image(image: Image.Image) -> torch.Tensor:
     """Preprocess image for model inference."""
     transform = build_inference_transform()
@@ -158,50 +251,6 @@ def predict_image(image_tensor: torch.Tensor, top_k: int = 5) -> List[Prediction
         )
 
     return predictions
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize model and class names on startup."""
-    global model, class_names
-
-    # Configuration - adjust these paths as needed
-    checkpoint_path = os.getenv(
-        "CHECKPOINT_PATH",
-        "outputs/checkpoints/epoch=00-val/acc=0.9307.ckpt"  # Update to your best checkpoint
-    )
-    data_dir = os.getenv("DATA_DIR", "data")
-    num_classes = int(os.getenv("NUM_CLASSES", "101"))
-    model_name = os.getenv("MODEL_NAME", "google/vit-base-patch16-224-in21k")
-
-    try:
-        # Load class names
-        class_names = load_class_names(data_dir)
-        if len(class_names) != num_classes:
-            logger.warning(
-                f"Number of classes in file ({len(class_names)}) "
-                f"doesn't match num_classes ({num_classes})"
-            )
-
-        # Load model
-        checkpoint = Path(checkpoint_path)
-        if not checkpoint.exists():
-            raise FileNotFoundError(
-                f"Checkpoint not found at {checkpoint_path}. "
-                f"Please update CHECKPOINT_PATH environment variable."
-            )
-
-        model = load_model_from_checkpoint(
-            str(checkpoint),
-            num_classes=len(class_names),
-            model_name=model_name,
-        )
-
-        logger.info("API startup completed successfully")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize API: {e}", exc_info=True)
-        raise
 
 
 @app.get("/")
@@ -246,6 +295,69 @@ async def predict(request: PredictionRequest):
 
         # Get predictions
         predictions = predict_image(image_tensor, top_k=request.top_k)
+
+        # Build response
+        response = PredictionResponse(
+            predictions=predictions,
+            top_prediction=predictions[0].class_name,
+            top_confidence=predictions[0].confidence,
+        )
+
+        logger.info(
+            f"Prediction completed: {response.top_prediction} "
+            f"(confidence: {response.top_confidence:.4f})"
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
+
+
+@app.post("/predict/upload", response_model=PredictionResponse)
+async def predict_upload(
+    file: UploadFile = File(...),
+    top_k: int = 5
+):
+    """
+    Predict food class from uploaded image file.
+
+    This endpoint accepts multipart/form-data with an image file.
+    Perfect for frontend file uploads.
+
+    Args:
+        file: Uploaded image file
+        top_k: Number of top predictions to return (default: 5)
+
+    Returns:
+        PredictionResponse with top-k predictions
+    """
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail="File must be an image"
+            )
+
+        # Read uploaded file
+        logger.info(f"Processing uploaded file: {file.filename}")
+        image_bytes = await file.read()
+
+        # Load image from bytes
+        image = load_image_from_bytes(image_bytes)
+
+        # Preprocess image
+        image_tensor = preprocess_image(image)
+
+        # Get predictions
+        predictions = predict_image(image_tensor, top_k=top_k)
 
         # Build response
         response = PredictionResponse(
