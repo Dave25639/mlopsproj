@@ -6,13 +6,13 @@ on:
     paths:
       - '**/*.dvc'
       - '.dvc/**'
-      - 'src/example_mlops/data.py'
+      - 'src/mlopsproj/data.py'
   pull_request:
     branches: [ master ]
     paths:
       - '**/*.dvc'
       - '.dvc/**'
-      - 'src/example_mlops/data.py'
+      - 'src/mlopsproj/data.py'
 
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-paths: |
@@ -56,20 +56,20 @@ jobs:
       - name: Check data statistics & generate report
         run: |
           # 1. Create the output directory
-          mkdir -p src/outputs/cml
+          mkdir -p src/mlopsproj/outputs/cml
 
           # 2. Run script and redirect stdout to the new path
           # Ensure your python script saves .png files to this same directory!
-          uv run python src/mlopsproj/data.py dataset-statistics > src/outputs/cml/data_statistics.md
+          uv run python src/mlopsproj/data.py dataset-statistics > src/mlopsproj/outputs/cml/data_statistics.md
 
           # 3. Append image references using paths relative to the .md file
           # Since the images and .md are in the same folder, use ./filename
-          echo '## Data Visualizations' >> src/outputs/cml/data_statistics.md
-          echo '### Sample Images' >> src/outputs/cml/data_statistics.md
-          echo '![](./food101_sample_images.png "Food-101 Samples")' >> src/outputs/cml/data_statistics.md
-          echo '### Label Distribution' >> src/outputs/cml/data_statistics.md
-          echo '![](./train_label_distribution.png "Train Distribution")' >> src/outputs/cml/data_statistics.md
-          echo '![](./test_label_distribution.png "Test Distribution")' >> src/outputs/cml/data_statistics.md
+          echo '## Data Visualizations' >> src/mlopsproj/outputs/cml/data_statistics.md
+          echo '### Sample Images' >> src/mlopsproj/outputs/cml/data_statistics.md
+          echo '![](./food101_sample_images.png "Food-101 Samples")' >> src/mlopsproj/outputs/cml/data_statistics.md
+          echo '### Label Distribution' >> src/mlopsproj/outputs/cml/data_statistics.md
+          echo '![](./train_label_distribution.png "Train Distribution")' >> src/mlopsproj/outputs/cml/data_statistics.md
+          echo '![](./test_label_distribution.png "Test Distribution")' >> src/mlopsproj/outputs/cml/data_statistics.md
 
       # 4. Use CML to post the report
       - name: Setup CML
@@ -80,4 +80,4 @@ jobs:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Point CML to the new file location
-          cml comment create src/outputs/cml/data_statistics.md --watermark-title="Data Checker Report"
+          cml comment create src/mlopsproj/outputs/cml/data_statistics.md --watermark-title="Data Checker Report"

@@ -10,11 +10,32 @@ on:
       - 'src/mlopsproj/train.py' # Trigger on training code change
 
 jobs:
-  # 1. FIRST, ensure the Docker image is built (reuses your Task 2)
+  # 1. FIRST, ensure the Docker image is built
   build-image:
-    uses: ./.github/workflows/build-docker.yaml # Reuse your existing workflow
-    with:
-      push-to-registry: true # Ensure it pushes to GHCR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./dockerfiles/train.dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/train:${{ github.sha }},ghcr.io/${{ github.repository }}/train:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # 2. THEN, submit a Vertex AI job using that new image
   submit-vertex-job:
@@ -23,7 +44,7 @@ jobs:
     env:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_REGION: us-central1
-      IMAGE_URI: ghcr.io/${{ github.repository }}-train:${{ github.sha }}
+      IMAGE_URI: ghcr.io/${{ github.repository }}/train:${{ github.sha }}
 
     steps:
       - name: Checkout code
