@@ -2250,12 +2250,9 @@ dependencies = [
     { name = "google-cloud-aiplatform" },
     { name = "httpx" },
     { name = "hydra-core" },
-<<<<<<< HEAD
     { name = "matplotlib" },
-=======
     { name = "loguru" },
     { name = "markdown" },
->>>>>>> b69792599e3f6e3194414c34de3f2ce05494f81b
     { name = "pillow" },
     { name = "pre-commit" },
     { name = "python-multipart" },
