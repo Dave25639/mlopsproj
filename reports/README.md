@@ -242,7 +242,7 @@ These concepts are important in larger projects because when multiple people wor
 >
 > Answer:
 
-In total we have implemented 17 tests. Primarily we are testing the data pipeline and model construction as these are the most critical parts of our application. For the data pipeline, we have 6 tests that verify the Food101DataModule correctly loads data, creates train, validation and test splits, produces batches with the correct shape and normalization, and handles data loading loops properly. For the model, we have 11 tests that check model initialization, forward pass correctness, training, validation and test step execution, optimizer configuration, and the freeze backbone functionality. These tests ensure that our core components work correctly before running expensive training experiments.
+In total we have implemented 17 tests. Primarily we are testing the data pipeline and model construction as these are the most critical parts of our application. For the data pipeline, we have 6 tests that verify the Food101DataModule correctly loads data, creates train, validation and test splits, and produces batches with the correct shape. For the model, we have 11 tests that check model initialization, forward pass correctness, training and validation step execution, and optimizer configuration. These tests ensure our core components work correctly before running expensive training experiments.
 
 ### Question 8
 
@@ -314,6 +314,8 @@ We have organized our continuous integration into several separate workflow file
 
 Our CI pipeline runs automatically on every push to main and on every pull request. The tests workflow runs pytest with coverage reporting, the linting workflow checks code style with Ruff and type checking with MyPy, and the Docker build workflow verifies that our containerized applications build correctly. We make use of caching in our workflows through GitHub Actions cache, which speeds up dependency installation by caching the uv package manager cache between runs. This significantly reduces CI run times, especially important when running tests across multiple OS and Python version combinations.
 
+The linting workflow ensures code quality by checking for style violations, unused imports, and type errors before code can be merged. The Docker build workflow tests that both our training and API containers can be built successfully, catching any dependency or configuration issues early. Each workflow is designed to fail fast if there are any issues, providing immediate feedback to developers. This comprehensive CI setup helps maintain code quality and prevents bugs from reaching the main branch.
+
 An example of a triggered workflow can be seen here: https://github.com/NicoELNO/mlopsproj/actions/workflows/tests.yaml
 
 ## Running code and tracking experiments
@@ -367,17 +369,11 @@ To reproduce an experiment, one would need to: check out the specific git commit
 >
 > Answer:
 
-As seen in the first image we have tracked training and validation loss, which both inform us about how well our model is learning and whether it is overfitting during our experiments. We also track accuracy metrics for both training and validation sets, which tells us the actual classification performance of our Vision Transformer model on the Food 101 dataset.
-
-As seen in the second image we are also tracking hyperparameters such as learning rate, batch size, weight decay, and model architecture settings. These are logged to W&B so we can compare different experiments and understand which hyperparameter combinations lead to better performance. Additionally, we log model checkpoints to W&B, allowing us to download and use the best performing models later.
-
-The metrics we track are important because loss values help us monitor training progress and detect issues like vanishing gradients or overfitting early. Accuracy metrics give us the actual performance we care about for the classification task. Hyperparameter logging enables us to run multiple experiments and systematically identify the best configuration. Without this tracking, it would be impossible to compare experiments or reproduce successful runs.
+As shown in the first image, we track both training and validation loss throughout the training process. These metrics provide essential insight into how well the model is learning from the data and whether it is beginning to overfit. Ideally, both losses should decrease steadily and remain relatively close to each other. A large gap between training and validation loss would indicate overfitting, while stagnating or increasing losses could point to optimization issues. In addition to loss, we track accuracy metrics for both the training and validation sets. Accuracy gives a more intuitive measure of performance, showing how well the Vision Transformer (ViT) model classifies images from the Food-101 dataset. Monitoring both loss and accuracy together provides a more complete picture of model behavior than either metric alone.
+In the second image, we log key hyperparameters and training configuration details such as learning rate, batch size, weight decay, number of epochs, warmup steps, and whether the backbone is frozen. Logging these parameters to Weights & Biases (W&B) allows us to systematically compare different experimental runs and understand how specific choices influence performance. This is especially important when fine-tuning large pretrained models like ViT, where small hyperparameter changes can significantly affect results. We also store summary metrics such as final accuracy, loss values, and global training steps, making it easy to identify the best-performing run at a glance.
+Overall, this comprehensive tracking setup is crucial for reproducibility, debugging, and informed decision-making. Loss metrics help detect training instabilities or overfitting early, accuracy reflects real task performance, and hyperparameter logging enables structured experimentation. Without such tracking, comparing experiments or reproducing successful results would be difficult and error-prone.
 
 ![W&B Training Metrics](figures/wandb6.png)
-![W&B Training Metrics](figures/wandb5.png)
-![W&B Training Metrics](figures/wandb4.png)
-![W&B Training Metrics](figures/wandb3.png)
-![W&B Training Metrics](figures/wandb2.png)
 ![W&B Training Metrics](figures/wandb1.png)
 ![W&B Hyperparameters](figures/wandbhyper.png)
 
@@ -567,7 +563,7 @@ To invoke the service, a user can make requests to the API endpoints. For exampl
 --- question 25 fill here ---
 We implemented both functional testing and load testing for our API. For functional testing, we used pytest with FastAPI's TestClient to test our API endpoints. Our test suite in `tests/test_api.py` covers health checks, root endpoint, classes endpoint, prediction endpoints with file uploads, error handling for invalid files, and validation of the top_k parameter. The tests use mocked models to ensure fast execution without requiring a full model load.
 
-For load testing, we created a custom load testing script in `tests/load_test_api.py` using pytest-asyncio and httpx. The script can be run both as a standalone tool (with command-line arguments for URL, number of users, and requests per user) and as pytest test functions. Our load tests simulate multiple concurrent users making requests to the API and measure key metrics including request latency (average, min, max), success rate, and requests per second. The tests automatically skip if the API is not running, making them safe to include in CI/CD pipelines. We can run lightweight tests (2 users, 2 requests each) for quick validation, or heavier load tests (10 users, 10 requests each) marked with the "slow" marker that can be skipped with `-m "not slow"`. This load testing helps us understand the API's capacity, identify bottlenecks, and ensure it can handle production traffic.
+For load testing, we created a custom load testing script in `tests/load_test_api.py` using pytest-asyncio and httpx. The script can be run both as a standalone tool and as pytest test functions. Our load tests simulate multiple concurrent users making requests to the API and measure key metrics including request latency, success rate, and requests per second. The tests automatically skip if the API is not running, making them safe to include in CI/CD pipelines. We can run lightweight tests (2 users, 2 requests each) for quick validation, or heavier load tests (10 users, 10 requests each) marked with the "slow" marker. This load testing helps us understand the API's capacity and ensure it can handle production traffic.
 
 ### Question 26
 
@@ -671,6 +667,8 @@ Users interact with the system in a few ways: they can clone the repository from
 
 --- question 30 fill here ---
 The biggest challenges in the project were related to learning and integrating various cloud and MLOps tools. Hydra configuration management required time to understand the composition patterns and how to properly structure config files. DAGsHub integration took effort to set up correctly with our existing workflow. Google Cloud Platform tools, especially gcloud CLI and Vertex AI, were challenging because the documentation and exercises were not always up to date, requiring us to troubleshoot and adapt to the current API versions.
+
+We spent the most time on setting up the cloud infrastructure and getting Docker containers to work correctly with DVC data pulling. Understanding how to configure Cloud Build triggers and Artifact Registry permissions was particularly time-consuming. Additionally, getting the API to work correctly with model loading and handling different image formats required significant debugging effort.
 
 We overcame these challenges by spending time reading documentation, experimenting with small examples, and helping each other debug issues. We also used online resources and community forums when official documentation was unclear. For GCP specifically, we focused on Compute Engine first (which was more straightforward) before attempting Vertex AI, which helped us build understanding incrementally. The collaborative approach of working together on all parts of the project, while slower, ensured that everyone understood the challenges and solutions, making the learning process more effective.
 
