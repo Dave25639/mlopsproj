@@ -55,7 +55,7 @@ jobs:
 
           # 2. Run script and redirect stdout to the new path
           # Ensure your python script saves .png files to this same directory!
-          uv run python src/mlopsproj/data.py > src/outputs/cml/data_statistics.md
+          uv run python src/mlopsproj/data.py data-statistics > src/outputs/cml/data_statistics.md
 
           # 3. Append image references using paths relative to the .md file
           # Since the images and .md are in the same folder, use ./filename
