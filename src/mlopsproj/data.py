@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
+import matplotlib.pyplot as plt
 import pytorch_lightning as L
 import torch
-from PIL import Image
 import typer
-import matplotlib.pyplot as plt
+from PIL import Image
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
@@ -113,8 +113,9 @@ def dataset_statistics(datadir: str = "data/", output_dir: str = "src/mlopsproj/
     """Compute Food-101 dataset statistics and save visualizations."""
     import logging
     import random
-    import matplotlib.pyplot as plt
     from pathlib import Path
+
+    import matplotlib.pyplot as plt
 
     logger = logging.getLogger(__name__)
 

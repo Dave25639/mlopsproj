@@ -10,11 +10,13 @@ Tests cover:
 """
 
 import io
+from unittest.mock import patch
+
 import pytest
 import torch
-from unittest.mock import patch
-from PIL import Image
 from fastapi.testclient import TestClient
+from PIL import Image
+
 from src.mlopsproj import api
 
 

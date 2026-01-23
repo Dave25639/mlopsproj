@@ -8,14 +8,15 @@ Can also be run with pytest:
     pytest tests/load_test_api.py -v
 """
 
-import asyncio
-import time
 import argparse
-from typing import List
-import httpx
-from PIL import Image
+import asyncio
 import io
+import time
+from typing import List
+
+import httpx
 import pytest
+from PIL import Image
 
 
 async def make_request(client: httpx.AsyncClient, url: str, image_bytes: io.BytesIO) -> dict:

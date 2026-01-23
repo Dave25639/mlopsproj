@@ -2,7 +2,9 @@ import pytest
 import torch
 from mlopsproj.data import Food101DataModule
 from torch.utils.data import Dataset
+
 from tests import _PATH_DATA
+
 
 @pytest.fixture(scope="session")
 def setup_food101_datamodule():

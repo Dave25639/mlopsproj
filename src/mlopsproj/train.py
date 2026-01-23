@@ -23,10 +23,9 @@ from pathlib import Path
 from typing import Optional
 
 import hydra
-from omegaconf import DictConfig, OmegaConf
-
 import pytorch_lightning as L
 import torch
+from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import (
     EarlyStopping,
     LearningRateMonitor,

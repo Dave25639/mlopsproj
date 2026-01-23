@@ -10,9 +10,11 @@ Usage:
     python log_to_wandb.py
 """
 
-import wandb
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import wandb
+
 
 def main():
     # Initialize wandb with the correct project and entity
