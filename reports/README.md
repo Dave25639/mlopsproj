@@ -125,7 +125,7 @@ will check the repositories and the code to verify your answers.
 >
 
 --- question 1 fill here ---
-
+group 121
 ### Question 2
 > **Enter the study number for each member in the group**
 >
@@ -136,7 +136,7 @@ will check the repositories and the code to verify your answers.
 > Answer:
 
 --- question 2 fill here ---
-
+s214421, s243219, s253525, s215167
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
 > **which did you use and how did they help you complete the project?**
@@ -150,6 +150,13 @@ will check the repositories and the code to verify your answers.
 > Answer:
 
 --- question 3 fill here ---
+We used Streamlit and the Hugging Face transformers library in our project.
+
+For the frontend, we used Streamlit to create a simple web interface where users can upload food images and see predictions. It was really easy to set up - we just needed to add file upload widgets and display the results, and it handled all the web stuff for us. This made it way faster than building a proper frontend from scratch.
+
+We also used the transformers library from Hugging Face to load the pretrained Vision Transformer model. Instead of implementing ViT ourselves, we could just use `ViTForImageClassification.from_pretrained()` to get the model architecture and weights. This saved us a lot of time and let us focus on fine-tuning it for our food classification task rather than building the model from scratch.
+
+Both packages helped us move faster on parts that weren't the core focus of the project, so we could spend more time on the MLOps pipeline itself.
 
 ## Coding environment
 
@@ -170,6 +177,16 @@ will check the repositories and the code to verify your answers.
 > Answer:
 
 --- question 4 fill here ---
+We used `uv` for managing our dependencies. All dependencies are defined in `pyproject.toml`, which has two groups: the main dependencies for running the project (like PyTorch, FastAPI, transformers) and dev dependencies for development tools (like pytest, ruff, mypy). We also have a `uv.lock` file that locks all the exact versions of packages and their transitive dependencies.
+
+To get an exact copy of our development environment, a new team member would need to:
+1. Clone the repository
+2. Install `uv` if they don't have it already (it's a fast Python package manager)
+3. Run `uv sync` in the project root
+
+The `uv sync` command reads both `pyproject.toml` and `uv.lock` to install all dependencies with the exact versions we used. This ensures everyone has the same environment. When someone adds a new package using `uv add <package>`, it automatically updates `pyproject.toml` and regenerates `uv.lock`, which gets committed to git so others can sync to the same versions.
+
+
 
 ### Question 5
 
@@ -187,6 +204,10 @@ will check the repositories and the code to verify your answers.
 
 --- question 5 fill here ---
 
+From the cookiecutter template we filled out the core modules in `src/mlopsproj/`: `data.py` for loading and preprocessing the Food-101 dataset, `model.py` for our Vision Transformer implementation, `train.py` for the training pipeline with PyTorch Lightning, `api.py` for the FastAPI inference service, `evaluate.py` for model evaluation, and `visualize.py` for visualization utilities. We also filled out the `configs/` folder with Hydra configuration files for data, model, training, and logging.
+
+We added several files that weren't in the template: `callbacks.py` for custom PyTorch Lightning callbacks (like logging predictions to W&B), `frontend.py` for our Streamlit frontend, `organize_data_script.py` for organizing the dataset, and a `scripts/` subfolder with data processing utilities. We also added `sweep.py` and `sweep_config.yaml` for running hyperparameter sweeps with W&B, and `cloudbuild.yaml` for GCP Cloud Build automation. Additionally, we created `cheatsheet.md` as a quick reference for common commands. The overall structure from the template was maintained, we just extended it with project-specific functionality.
+
 ### Question 6
 
 > **Did you implement any rules for code quality and format? What about typing and documentation? Additionally,**
@@ -200,7 +221,9 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 6 fill here ---
+We used Ruff for both linting and formatting, which is faster than using separate tools like flake8 and black. For type checking, we used MyPy to catch type related errors before runtime. We also set up pre commit hooks that automatically run these checks before commits, so problematic code does not get pushed to the repository. For documentation, we wrote docstrings for all our functions and classes explaining what they do, their parameters, and return values.
+
+These concepts are important in larger projects because when multiple people work on the same codebase, consistency is essential. Without formatting rules, everyone writes code differently and it becomes difficult to read and maintain. Type hints help catch bugs early. For example, if someone passes a string where an integer is expected, MyPy will catch it before the code runs. Documentation matters because when you return to code months later, or when a new team member joins, you need to understand what functions do without reading through all the implementation details. Pre commit hooks ensure these standards are enforced automatically, so you do not have to remember to run checks manually.
 
 ## Version control
 
@@ -219,7 +242,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 7 fill here ---
+In total we have implemented 17 tests. Primarily we are testing the data pipeline and model construction as these are the most critical parts of our application. For the data pipeline, we have 6 tests that verify the Food101DataModule correctly loads data, creates train, validation and test splits, produces batches with the correct shape and normalization, and handles data loading loops properly. For the model, we have 11 tests that check model initialization, forward pass correctness, training, validation and test step execution, optimizer configuration, and the freeze backbone functionality. These tests ensure that our core components work correctly before running expensive training experiments.
 
 ### Question 8
 
@@ -234,7 +257,9 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 8 fill here ---
+The total code coverage of our code is approximately 60 to 70 percent, which includes all our source code. We are far from 100 percent coverage of our code. Our tests primarily cover the data pipeline and model construction, but we do not have comprehensive tests for the training script, API endpoints, frontend, or utility scripts.
+
+Even if we had 100 percent code coverage, we would not trust the code to be completely error free. Code coverage only measures whether lines of code are executed during tests, not whether the code behaves correctly in all scenarios. For example, a test might call a function with valid inputs and achieve 100 percent coverage, but the function could still fail with edge cases, invalid inputs, or unexpected data formats. Additionally, coverage does not test integration between components, performance under load, or behavior in production environments with real data. High coverage is valuable for catching obvious bugs, but thorough testing requires thinking about edge cases, error handling, and integration scenarios beyond just line coverage.
 
 ### Question 9
 
