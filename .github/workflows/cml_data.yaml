@@ -59,7 +59,7 @@ jobs:
           mkdir -p src/outputs/cml
 
           # Run dataset_statistics directly
-          uv run python src/mlopsproj/data.py dataset_statistics --datadir data/ --output_dir src/outputs/cml
+          uv run python src/mlopsproj/data.py dataset-statistics --datadir data/ --output_dir src/outputs/cml
 
       # 4. Setup CML
       - name: Setup CML
