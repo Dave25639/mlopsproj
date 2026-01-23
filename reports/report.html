@@ -259,7 +259,7 @@ will check the repositories and the code to verify your answers.</p>
 <li>[x] Create a FastAPI application that can do inference using your model (M22)</li>
 <li>[ ] Deploy your model in GCP using either Functions or Run as the backend (M23)</li>
 <li>[x] Write API tests for your application and setup continues integration for these (M24)</li>
-<li>[ ] Load test your application (M24)</li>
+<li>[x] Load test your application (M24)</li>
 <li>[ ] Create a more specialized ML-deployment API using either ONNX or BentoML, or both (M25)</li>
 <li>[x] Create a frontend for your API (M26)</li>
 </ul>
@@ -610,7 +610,8 @@ We successfully managed to train our model in the cloud using Compute Engine. Ou
 <p>Answer:</p>
 </blockquote>
 <p>--- question 25 fill here ---<br />
-We did not perform comprehensive functional testing or load testing of our API. For functional testing, we would use pytest with httpx to test our API endpoints and ensure they return the correct responses, validate error handling, and check that all endpoints work as expected. For load testing, we would use a tool like Locust to simulate multiple concurrent users and measure the API's performance under load. This would help us understand the API's capacity, identify bottlenecks, and ensure it can handle production traffic. Load testing would also help us determine appropriate resource allocation if we were to deploy to the cloud.</p>
+We implemented both functional testing and load testing for our API. For functional testing, we used pytest with FastAPI's TestClient to test our API endpoints. Our test suite in <code>tests/test_api.py</code> covers health checks, root endpoint, classes endpoint, prediction endpoints with file uploads, error handling for invalid files, and validation of the top_k parameter. The tests use mocked models to ensure fast execution without requiring a full model load.</p>
+<p>For load testing, we created a custom load testing script in <code>tests/load_test_api.py</code> using pytest-asyncio and httpx. The script can be run both as a standalone tool (with command-line arguments for URL, number of users, and requests per user) and as pytest test functions. Our load tests simulate multiple concurrent users making requests to the API and measure key metrics including request latency (average, min, max), success rate, and requests per second. The tests automatically skip if the API is not running, making them safe to include in CI/CD pipelines. We can run lightweight tests (2 users, 2 requests each) for quick validation, or heavier load tests (10 users, 10 requests each) marked with the "slow" marker that can be skipped with <code>-m "not slow"</code>. This load testing helps us understand the API's capacity, identify bottlenecks, and ensure it can handle production traffic.</p>
 <h3>Question 26</h3>
 <blockquote>
 <p><strong>Did you manage to implement monitoring of your deployed model? If yes, explain how it works. If not, explain how</strong><br />
@@ -664,10 +665,13 @@ We implemented integration with DAGsHub for experiment tracking and model versio
 <p>Answer:</p>
 </blockquote>
 <p>--- question 29 fill here ---<br />
-<img alt="System Architecture" src="figures/overview.png" /></p>
-<p>The starting point of the diagram is our local development setup, where we integrated version control (Git), dependency management (uv), and experiment tracking (W&amp;B and DAGsHub) into our code. Whenever we commit code and push to GitHub, it automatically triggers our CI/CD pipeline through GitHub Actions, which runs unit tests, linting checks, and builds Docker images.</p>
-<p>From there, the diagram shows our cloud infrastructure: data is stored in GCP Cloud Storage buckets and version controlled with DVC. When we need to train a model, we use Cloud Build to build our training Docker image, which is stored in the Artifact Registry. The training runs on a Compute Engine VM instance, pulling the Docker image and data from their respective storage locations.</p>
-<p>For deployment, we have a FastAPI application containerized in a Docker image, which can be deployed locally or to cloud services. The API serves predictions to users, and we have a Streamlit frontend that connects to the API for a user-friendly interface. Throughout this pipeline, we use W&amp;B for experiment tracking and logging, ensuring all experiments are reproducible and trackable.</p>
+<img alt="System Architecture" src="figures/diagram.jpeg" /></p>
+<p>The diagram starts with our local development workflow. On our laptops, we use W&amp;B for experiment tracking, Hydra for configuration management, and TensorBoard for visualizing training progress. This development code flows into our dev environment where we test things locally before pushing to version control.</p>
+<p>When we're ready, we commit our code and push it to GitHub. Before the code actually gets pushed, pre-commit hooks run automatically to check code quality. Once the code is on GitHub, GitHub Actions kicks in to run our CI pipeline - things like unit tests and linting checks.</p>
+<p>For data management, we use DVC (Data Version Control) integrated with DAGsHub. The actual data files live in cloud storage, but DVC tracks which versions we're using through small metadata files in git. This keeps our repository lightweight while still versioning our datasets.</p>
+<p>When we push code to GitHub, it triggers a GCP Cloud Build workflow. This builds our Docker images and pushes them to Google's Container Registry. The Docker containers are set up to pull data via DVC when they run, so they automatically fetch the right dataset version from our remote storage.</p>
+<p>The built Docker images get deployed to a Compute Engine VM instance in Google Cloud. The VM runs the containerized application, which could be our training pipeline or our inference API. For serving predictions, we expose a FastAPI frontend that users can query.</p>
+<p>Users interact with the system in a few ways: they can clone the repository from GitHub to run things locally, pull the latest Docker image directly to run it themselves, or simply query the deployed API frontend to get predictions without worrying about the infrastructure underneath.</p>
 <h3>Question 30</h3>
 <blockquote>
 <p><strong>Discuss the overall struggles of the project. Where did you spend most time and what did you do to overcome these</strong><br />

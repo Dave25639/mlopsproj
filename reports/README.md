@@ -637,13 +637,19 @@ We implemented integration with DAGsHub for experiment tracking and model versio
 > Answer:
 
 --- question 29 fill here ---
-![System Architecture](figures/overview.png)
+![System Architecture](figures/diagram.jpeg)
 
-The starting point of the diagram is our local development setup, where we integrated version control (Git), dependency management (uv), and experiment tracking (W&B and DAGsHub) into our code. Whenever we commit code and push to GitHub, it automatically triggers our CI/CD pipeline through GitHub Actions, which runs unit tests, linting checks, and builds Docker images.
+The diagram starts with our local development workflow. On our laptops, we use W&B for experiment tracking, Hydra for configuration management, and TensorBoard for visualizing training progress. This development code flows into our dev environment where we test things locally before pushing to version control.
 
-From there, the diagram shows our cloud infrastructure: data is stored in GCP Cloud Storage buckets and version controlled with DVC. When we need to train a model, we use Cloud Build to build our training Docker image, which is stored in the Artifact Registry. The training runs on a Compute Engine VM instance, pulling the Docker image and data from their respective storage locations.
+When we're ready, we commit our code and push it to GitHub. Before the code actually gets pushed, pre-commit hooks run automatically to check code quality. Once the code is on GitHub, GitHub Actions kicks in to run our CI pipeline - things like unit tests and linting checks.
 
-For deployment, we have a FastAPI application containerized in a Docker image, which can be deployed locally or to cloud services. The API serves predictions to users, and we have a Streamlit frontend that connects to the API for a user-friendly interface. Throughout this pipeline, we use W&B for experiment tracking and logging, ensuring all experiments are reproducible and trackable.
+For data management, we use DVC (Data Version Control) integrated with DAGsHub. The actual data files live in cloud storage, but DVC tracks which versions we're using through small metadata files in git. This keeps our repository lightweight while still versioning our datasets.
+
+When we push code to GitHub, it triggers a GCP Cloud Build workflow. This builds our Docker images and pushes them to Google's Container Registry. The Docker containers are set up to pull data via DVC when they run, so they automatically fetch the right dataset version from our remote storage.
+
+The built Docker images get deployed to a Compute Engine VM instance in Google Cloud. The VM runs the containerized application, which could be our training pipeline or our inference API. For serving predictions, we expose a FastAPI frontend that users can query.
+
+Users interact with the system in a few ways: they can clone the repository from GitHub to run things locally, pull the latest Docker image directly to run it themselves, or simply query the deployed API frontend to get predictions without worrying about the infrastructure underneath.
 
 ### Question 30
 
