@@ -1,6 +1,7 @@
 name: DVC Data Report Workflow
 on:
   push:
+    workflow_dispatch:
     branches: [ master ]
     paths:
       - '**/*.dvc'
