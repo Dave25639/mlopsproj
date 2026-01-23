@@ -63,7 +63,7 @@ jobs:
 
       # 4. Setup CML
       - name: Setup CML
-        uses: iterative/setup-cml@v2
+        uses: iterative/setup-cml@v3
 
       # 5. Post report with CML using a PAT
       - name: Comment on PR
